@@ -203,6 +203,56 @@ def validar() -> None:
     print("validação:", "tudo confere" if not erros else f"{erros} tabela(s) divergente(s)")
 
 
+def enviar_flexia() -> None:
+    """Código da FlexIA que o Code Editor baixa com flexia/instalar_data_lake.sh."""
+    base = BASE / "flexia" / "app"
+    pares = [(p, f"flexia/app/{p.relative_to(base).as_posix()}") for p in base.rglob("*.py")]
+    for p, k in pares:
+        s3.upload_file(str(p), BUCKET, k)
+    print(f"flexia: {len(pares)} arquivos enviados")
+
+
+def politica_leitura_lake() -> dict:
+    arn = f"arn:aws:glue:{REGIAO}:{CONTA}"
+    return {
+        "Version": "2012-10-17",
+        "Statement": [
+            {"Sid": "AthenaWorkgroup", "Effect": "Allow",
+             "Action": ["athena:StartQueryExecution", "athena:GetQueryExecution", "athena:GetQueryResults",
+                        "athena:StopQueryExecution", "athena:GetWorkGroup"],
+             "Resource": f"arn:aws:athena:{REGIAO}:{CONTA}:workgroup/{WORKGROUP}"},
+            {"Sid": "GlueCatalogo", "Effect": "Allow",
+             "Action": ["glue:GetDatabase", "glue:GetTable", "glue:GetTables", "glue:GetPartition", "glue:GetPartitions"],
+             "Resource": [f"{arn}:catalog", f"{arn}:database/{DATABASE}", f"{arn}:table/{DATABASE}/*"]},
+            {"Sid": "LerLake", "Effect": "Allow", "Action": ["s3:GetObject", "s3:ListBucket", "s3:GetBucketLocation"],
+             "Resource": [f"arn:aws:s3:::{BUCKET}", f"arn:aws:s3:::{BUCKET}/curated/*", f"arn:aws:s3:::{BUCKET}/analytics/*"]},
+            {"Sid": "ResultadosAthena", "Effect": "Allow",
+             "Action": ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload", "s3:ListMultipartUploadParts"],
+             "Resource": f"arn:aws:s3:::{BUCKET}/athena-results/*"},
+        ],
+    }
+
+
+def permitir_runtimes() -> None:
+    """Anexa a política de leitura do lake às roles dos runtimes AgentCore da conta (e à role do Code Editor)."""
+    iam = sessao.client("iam")
+    roles = set()
+    try:
+        ctl = sessao.client("bedrock-agentcore-control")
+        for r in ctl.list_agent_runtimes().get("agentRuntimes", []):
+            det = ctl.get_agent_runtime(agentRuntimeId=r["agentRuntimeId"])
+            roles.add(det["roleArn"].split("/")[-1])
+            print(f"  runtime {r['agentRuntimeName']} -> role {det['roleArn'].split('/')[-1]}")
+    except Exception as e:  # noqa: BLE001
+        print(f"  aviso: não consegui listar runtimes AgentCore ({e})")
+    extra = os.environ.get("ROLES_EXTRAS", "")
+    roles.update(r for r in extra.split(",") if r)
+    doc = __import__("json").dumps(politica_leitura_lake())
+    for role in sorted(roles):
+        iam.put_role_policy(RoleName=role, PolicyName="FlexIALeituraDataLake", PolicyDocument=doc)
+        print(f"  política FlexIALeituraDataLake aplicada em {role}")
+
+
 def main() -> None:
     print(f"conta {CONTA}  região {REGIAO}  bucket {BUCKET}")
     if "--validar" not in sys.argv:
@@ -212,6 +262,12 @@ def main() -> None:
             enviar_raw()
         criar_catalogo()
         criar_workgroup()
+        enviar_flexia()
+        # Concessão de IAM só com aprovação explícita (flag). Sem ela, apenas lista o que seria alterado.
+        if "--permitir-runtimes" in sys.argv:
+            permitir_runtimes()
+        else:
+            print("IAM: nada alterado. Rode com --permitir-runtimes para dar à FlexIA leitura do lake.")
     validar()
 
 
