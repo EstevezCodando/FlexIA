@@ -6,7 +6,7 @@ responde. Perguntas simples ficam em modelos rápidos; cálculo e raciocínio lo
   rota          complexidade   modelo que responde
   conversa      -              nvidia.nemotron-nano-3-30b       (sem ferramentas)
   fora_escopo   -              nvidia.nemotron-nano-3-30b       (recusa educada)
-  documentos    simples        nvidia.nemotron-super-3-120b     (buscar_documentos)
+  documentos    simples        claude haiku 4.5                 (buscar_documentos; fidelidade literal)
   dados         simples        claude haiku 4.5                 (SQL no lake)
   qualquer      complexa       claude sonnet 4.6                (todas as ferramentas)
   misto         -              claude sonnet 4.6
@@ -22,7 +22,9 @@ REGIAO = os.environ.get("AWS_REGION", "us-east-1")
 ROTEADOR = os.environ.get("FLEXIA_MODELO_ROTEADOR", "nvidia.nemotron-nano-3-30b")
 MODELOS = {
     "rapido": os.environ.get("FLEXIA_MODELO_RAPIDO", "nvidia.nemotron-nano-3-30b"),
-    "documentos": os.environ.get("FLEXIA_MODELO_DOCUMENTOS", "nvidia.nemotron-super-3-120b"),
+    # Nemotron Super foi testado aqui e inventou incisos da Lei 14.300 (mesmo entre aspas);
+    # Claude Haiku 4.5 transcreveu o texto exato. Documentos exigem fidelidade literal.
+    "documentos": os.environ.get("FLEXIA_MODELO_DOCUMENTOS", "us.anthropic.claude-haiku-4-5-20251001-v1:0"),
     "dados": os.environ.get("FLEXIA_MODELO_DADOS", "us.anthropic.claude-haiku-4-5-20251001-v1:0"),
     "raciocinio": os.environ.get("FLEXIA_MODELO_RACIOCINIO", "us.anthropic.claude-sonnet-4-6"),
 }

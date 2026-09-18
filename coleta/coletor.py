@@ -120,6 +120,10 @@ _RUIDO = re.compile(
 def limpar(texto: str) -> str:
     """Remove botões de compartilhamento e linhas em branco repetidas."""
     texto = _RUIDO.sub("", texto)
+    # junta linhas quebradas no meio da frase (ex.: HTML do Planalto), preservando parágrafos,
+    # listas, títulos e tabelas Markdown
+    texto = re.sub(r"(?<=[^\n|])\n(?=[^\n|#*>\-])", " ", texto)
+    texto = re.sub(r"[ \t]{2,}", " ", texto)
     return re.sub(r"\n{3,}", "\n\n", texto).strip()
 
 
@@ -145,9 +149,10 @@ class Gravador:
         titulo = re.sub(r"\s+", " ", titulo or "").strip()
         if len(titulo) < 12 or re.fullmatch(r"[A-Za-z]?\d+\w*", titulo):
             # títulos pobres (ex.: "L14300" no Planalto): usa a primeira linha que identifica o ato
-            m = re.search(r"^[#*\s]*((LEI|DECRETO|MEDIDA PROVIS[ÓO]RIA|RESOLU[ÇC][ÃA]O|PORTARIA)[^\n]{5,140})",
-                          texto, re.I | re.M)
-            titulo = re.sub(r"[*#_\[\]]", "", m.group(1)).strip() if m else titulo
+            m = re.search(r"\b((?:LEI|DECRETO|MEDIDA PROVIS[ÓO]RIA|RESOLU[ÇC][ÃA]O NORMATIVA|PORTARIA)"
+                          r"(?: COMPLEMENTAR)?\s+N[º°o.]\s*[\d.]+,?\s+DE\s+\d{1,2}[º°]?\s+DE\s+\w+\s+DE\s+\d{4})",
+                          re.sub(r"[*_\[\]\s]+", " ", texto))
+            titulo = m.group(1).strip() if m else titulo
         agora = datetime.now(timezone.utc).isoformat(timespec="seconds")
         meta = {"url": url, "titulo": titulo or url, "orgao": self.fonte["orgao"], "tipo": self.fonte["tipo"],
                 "fonte": self.fonte["id"], "formato": formato, "coletado_em": agora, "sha256": sha,

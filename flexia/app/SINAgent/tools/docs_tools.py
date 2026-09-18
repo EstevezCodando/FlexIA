@@ -9,8 +9,10 @@ coletas agendadas sem reiniciar o agente.
 import gzip
 import json
 import os
+import re
 import threading
 import time
+import unicodedata
 
 import boto3
 import numpy as np
@@ -45,12 +47,29 @@ def _carregar() -> dict:
             vet = vet.reshape(-1, DIM)
             if len(vet) != len(linhas):  # índice sendo reescrito: ignora esta fonte até a próxima carga
                 continue
-            metas += [json.loads(l) for l in linhas]
+            for l in linhas:
+                m = json.loads(l)
+                m["_norm"] = _normalizar(f"{m['titulo']} {m['texto']}")
+                metas.append(m)
             blocos.append(vet)
         vetores = np.vstack(blocos) if blocos else np.zeros((0, DIM), dtype=np.float32)
         vetores = vetores / np.maximum(np.linalg.norm(vetores, axis=1, keepdims=True), 1e-9)
         _indice.update(carregado_em=time.time(), meta=metas, vetores=vetores.astype(np.float32))
         return _indice
+
+
+_VAZIAS = {"sobre", "quais", "qual", "como", "quando", "onde", "define", "definicao", "diz", "para", "pelo",
+            "pela", "entre", "segundo", "ultimas", "noticias", "energia", "eletrica", "setor", "lei"}
+
+
+def _normalizar(texto: str) -> str:
+    return unicodedata.normalize("NFKD", texto.lower()).encode("ascii", "ignore").decode()
+
+
+def _termos(pergunta: str) -> list[str]:
+    tokens = re.findall(r"[a-z0-9][a-z0-9.º°/-]*", _normalizar(pergunta))
+    return list(dict.fromkeys(t.strip(".") for t in tokens
+                              if (len(t) >= 5 or any(c.isdigit() for c in t)) and t not in _VAZIAS))
 
 
 def aquecer() -> int:
@@ -85,6 +104,13 @@ def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade
     q = np.asarray(json.loads(_bedrock.invoke_model(modelId=MODELO_EMBED, body=corpo)["body"].read())["embeddings"][0],
                    dtype=np.float32)
     scores = idx["vetores"] @ (q / max(np.linalg.norm(q), 1e-9))
+    # Busca híbrida: bônus léxico para termos distintivos da pergunta (números de lei/artigo,
+    # siglas, palavras longas) que aparecem literalmente no trecho.
+    termos = _termos(pergunta)
+    if termos:
+        lexico = np.array([sum(t in m["_norm"] for t in termos) / len(termos) for m in idx["meta"]],
+                          dtype=np.float32)
+        scores = scores + 0.15 * lexico
 
     mascara = np.ones(len(scores), dtype=bool)
     if orgao or tipo:

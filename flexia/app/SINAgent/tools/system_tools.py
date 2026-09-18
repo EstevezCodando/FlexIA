@@ -15,8 +15,9 @@ FlexIA — estado atual
 
 AgentCore Runtime: configurado
 Framework Strands: configurado
-Roteamento por pergunta: NVIDIA Nemotron Nano 3 30B escolhe o modelo
-  (Nemotron Nano, Nemotron Super 3 120B, Claude Haiku 4.5 ou Claude Sonnet 4.6)
+Roteamento por pergunta: NVIDIA Nemotron Nano 3 30B classifica cada pergunta e escolhe o modelo
+  (Nemotron Nano para conversa, Claude Haiku 4.5 para dados e documentos, Claude Sonnet 4.6 para
+  análises complexas ou mistas)
 
 Integração ONS: IMPLEMENTADA — data lake no S3 via DuckDB (geração por usina, balanço,
   carga, CMO, intercâmbio, constrained-off eólico e solar, programação diária, cadastros)
