@@ -135,10 +135,13 @@ def publicar_catalogo() -> None:
 def enviar_flexia() -> None:
     """Código da FlexIA que o Code Editor baixa com flexia/instalar_data_lake.sh."""
     base = BASE / "flexia" / "app"
-    pares = [(p, f"flexia/app/{p.relative_to(base).as_posix()}") for p in base.rglob("*.py")]
+    pares = [(p, f"flexia/app/{p.relative_to(base).as_posix()}") for p in base.rglob("*.py")
+             if "__pycache__" not in p.parts]
+    # coletor agendado (baixado por flexia/instalar_coletor_agendado.sh)
+    pares += [(BASE / "coleta" / n, f"deploy/coletor/{n}") for n in ("coletor.py", "fontes.py", "indexar.py")]
     for p, k in pares:
         s3.upload_file(str(p), BUCKET, k)
-    print(f"flexia: {len(pares)} arquivos enviados")
+    print(f"flexia + coletor: {len(pares)} arquivos enviados")
 
 
 def politica_leitura_lake() -> dict:

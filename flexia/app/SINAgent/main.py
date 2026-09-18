@@ -35,6 +35,11 @@ def _aquecer() -> None:
         log.info("FlexIA: data lake pronto")
     except Exception as exc:  # noqa: BLE001
         log.warning("FlexIA: aquecimento do data lake falhou: %s", exc)
+    try:
+        from tools.docs_tools import aquecer
+        log.info("FlexIA: índice de documentos pronto (%d trechos)", aquecer())
+    except Exception as exc:  # noqa: BLE001
+        log.warning("FlexIA: aquecimento do índice de documentos falhou: %s", exc)
 
 
 threading.Thread(target=_aquecer, daemon=True).start()

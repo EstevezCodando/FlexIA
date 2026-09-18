@@ -2,24 +2,24 @@
 
 Para cada fonte com documentos novos: divide o Markdown em trechos, gera embeddings
 (Cohere Embed Multilingual v3 no Bedrock, 1024 dimensões, bom para português) e grava
-docs/index/<fonte>.parquet com texto, metadados e vetor. Só entram as versões atuais de cada
-URL (docs/estado/<fonte>.json). A busca é feita pelo DuckDB com list_cosine_similarity, sem
-banco vetorial (OpenSearch/S3 Vectors estão bloqueados na conta do workshop).
+docs/index/<fonte>.jsonl.gz (texto e metadados) + docs/index/<fonte>.f32 (vetores float32).
+Só entram as versões atuais de cada URL (docs/estado/<fonte>.json). A FlexIA carrega os vetores
+em memória e busca por similaridade de cosseno com numpy, sem banco vetorial (OpenSearch e
+S3 Vectors estão bloqueados na conta do workshop).
 
 Uso:
   python coleta/indexar.py [--local out/docs] [--fonte ID ...]
 """
 import argparse
-import io
+import gzip
 import json
 import os
 import re
 import sys
+from array import array
 from pathlib import Path
 
 import boto3
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from coletor import Destino  # noqa: E402
@@ -93,7 +93,7 @@ def indexar_fonte(fonte_id: str, destino: Destino, bedrock) -> dict:
     atuais = {sha[:16] for sha in estado.values()}
     metas = [c for c in leitor.listar(f"docs/raw/{fonte_id}/") if c.endswith(".json")]
     metas = [c for c in metas if Path(c).stem in atuais]
-    chave_idx = f"docs/index/{fonte_id}.parquet"
+    chave_idx = f"docs/index/{fonte_id}"
     marca = f"docs/index/{fonte_id}.versao.json"
     assinatura = sorted(atuais)
     if destino.ler_json(marca).get("docs") == assinatura:
@@ -111,17 +111,16 @@ def indexar_fonte(fonte_id: str, destino: Destino, bedrock) -> dict:
         return {"fonte": fonte_id, "status": "sem documentos"}
     # O título entra no texto embutido para dar contexto ao trecho.
     vetores = embed(bedrock, [f"{l['titulo']}\n{l['texto']}" for l in linhas])
-    for l, v in zip(linhas, vetores):
-        l["embedding"] = v
-    tabela = pa.Table.from_pylist(linhas, schema=pa.schema([
-        ("doc_id", pa.string()), ("trecho", pa.int32()), ("texto", pa.string()), ("url", pa.string()),
-        ("titulo", pa.string()), ("orgao", pa.string()), ("tipo", pa.string()), ("fonte", pa.string()),
-        ("coletado_em", pa.string()), ("embedding", pa.list_(pa.float32(), DIM)),
-    ]))
-    buf = io.BytesIO()
-    pq.write_table(tabela, buf, compression="zstd")
-    destino.gravar(chave_idx, buf.getvalue(), "application/octet-stream")
-    destino.gravar(marca, json.dumps({"docs": assinatura}).encode(), "application/json")
+    # Formato sem pyarrow (cabe na Lambda): metadados em JSONL.gz e vetores float32 contíguos,
+    # linha i do JSONL <-> vetor i do .f32.
+    jsonl = "\n".join(json.dumps(l, ensure_ascii=False) for l in linhas).encode("utf-8")
+    matriz = array("f", (x for v in vetores for x in v))
+    if sys.byteorder != "little":
+        matriz.byteswap()
+    destino.gravar(chave_idx + ".jsonl.gz", gzip.compress(jsonl), "application/gzip")
+    destino.gravar(chave_idx + ".f32", matriz.tobytes(), "application/octet-stream")
+    destino.gravar(marca, json.dumps({"docs": assinatura, "trechos": len(linhas), "dim": DIM}).encode(),
+                   "application/json")
     return {"fonte": fonte_id, "status": "indexada", "documentos": len(metas), "trechos": len(linhas)}
 
 
