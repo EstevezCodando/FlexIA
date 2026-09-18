@@ -26,7 +26,7 @@ if "data_lake_tools" not in s:
 t = pathlib.Path("app/SINAgent/tools/system_tools.py")
 u = t.read_text(encoding="utf-8")
 u = u.replace("Integração ONS: ainda não implementada",
-              "Integração ONS: IMPLEMENTADA (data lake no Athena: geração, carga, CMO, intercâmbio, constrained-off)")
+              "Integração ONS: IMPLEMENTADA (data lake no S3 via DuckDB: geração, carga, CMO, intercâmbio, constrained-off)")
 u = u.replace("Integração meteorológica: ainda não implementada",
               "Integração meteorológica: IMPLEMENTADA (reanálise ERA5 horária 2023-2026)")
 u = u.replace("Integração regulatória: ainda não implementada",
@@ -36,7 +36,7 @@ u = u.replace("Não existem dados operacionais reais conectados nesta etapa.",
 t.write_text(u, encoding="utf-8")
 PY
 
-grep -q '^boto3' app/SINAgent/requirements.txt 2>/dev/null || echo "boto3" >> app/SINAgent/requirements.txt 2>/dev/null || true
+for dep in boto3 duckdb; do grep -qi "^$dep" app/SINAgent/requirements.txt 2>/dev/null || echo "$dep" >> app/SINAgent/requirements.txt; done
 python3 -m py_compile app/SINAgent/main.py app/SINAgent/tools/data_lake_tools.py app/SINAgent/domain/regras_lake.py
 echo "FlexIA conectada ao data lake. Teste local:"
 agentcore dev "Qual foi o volume total de corte (curtailment) eólico e solar em 2025, por razão da restrição? Use as ferramentas de dados."

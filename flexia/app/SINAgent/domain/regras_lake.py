@@ -1,7 +1,7 @@
 """Gerado por pipeline/05_gerar_flexia.py a partir de pipeline/catalogo.py. Não edite à mão."""
 
 PROMPT_DATA_LAKE = """
-DADOS DISPONÍVEIS (data lake do Hackathon ONS no Amazon Athena):
+DADOS DISPONÍVEIS (data lake do Hackathon ONS: Parquet no S3 consultado com DuckDB):
 
 Você tem ferramentas para consultar dados REAIS: listar_tabelas, descrever_tabela e consultar_sql.
 Fluxo obrigatório para perguntas com números: listar_tabelas -> descrever_tabela -> consultar_sql.

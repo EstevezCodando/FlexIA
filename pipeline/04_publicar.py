@@ -1,17 +1,20 @@
-"""Publica o lake na AWS: S3 + Glue Data Catalog + Athena. Idempotente.
+"""Publica o lake na AWS: S3 (Parquet particionado) + catálogo JSON. Idempotente.
 
-Pré-requisito: credenciais da conta do workshop em um perfil (padrão: AWS_PROFILE=hackathon)
-ou em variáveis de ambiente. Nada aqui é público: bucket com Block Public Access.
+A conta do workshop não permite Glue/Athena; a consulta é feita pelo DuckDB lendo o Parquet
+direto do S3. O dicionário de dados vai para s3://<bucket>/catalogo/catalogo.json.
+
+Pré-requisito: perfil AWS (padrão: AWS_PROFILE=hackathon). Bucket com Block Public Access.
 
 Uso:
-  python pipeline/04_publicar.py            # tudo
-  python pipeline/04_publicar.py --sem-raw  # pula o upload dos brutos (~5 GB)
-  python pipeline/04_publicar.py --validar  # só confere contagens no Athena
+  python pipeline/04_publicar.py                       # tudo
+  python pipeline/04_publicar.py --sem-raw             # pula o upload dos brutos
+  python pipeline/04_publicar.py --validar             # só confere contagens lendo do S3
+  python pipeline/04_publicar.py --permitir-runtimes   # também dá leitura do lake às roles AgentCore
 """
 import csv
+import json
 import os
 import sys
-import time
 from pathlib import Path
 
 import boto3
@@ -20,26 +23,18 @@ from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import ClientError
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from catalogo import TABELAS  # noqa: E402
+from catalogo import REGRAS, TABELAS  # noqa: E402
 
 REGIAO = os.environ.get("AWS_REGION", "us-east-1")
 PERFIL = os.environ.get("AWS_PROFILE", "hackathon")
 BASE = Path(__file__).resolve().parent.parent
 LAKE = BASE / "out" / "lake"
 ORIGEM = Path(os.environ.get("ORIGEM", r"C:\Hackathon_ONS"))
-DATABASE = "ons_lake"
-WORKGROUP = "ons-lake"
-LIMITE_BYTES_CONSULTA = 20 * 1024**3  # 20 GB por consulta (proteção de custo)
 EXCLUIR_RAW = (".duckdb",)
 
-TIPO_GLUE = {"VARCHAR": "string", "DOUBLE": "double", "BIGINT": "bigint", "INTEGER": "int",
-             "TIMESTAMP": "timestamp", "DATE": "date", "BOOLEAN": "boolean", "FLOAT": "float"}
-
-sessao = boto3.Session(profile_name=PERFIL if PERFIL else None, region_name=REGIAO) \
+sessao = boto3.Session(profile_name=PERFIL, region_name=REGIAO) \
     if PERFIL in boto3.Session().available_profiles else boto3.Session(region_name=REGIAO)
 s3 = sessao.client("s3")
-glue = sessao.client("glue")
-athena = sessao.client("athena")
 CONTA = sessao.client("sts").get_caller_identity()["Account"]
 BUCKET = os.environ.get("BUCKET", f"ons-datalake-{CONTA}")
 TRANSFER = TransferConfig(multipart_threshold=64 * 1024**2, max_concurrency=16)
@@ -98,109 +93,43 @@ def enviar_raw() -> None:
     enviar(pares, "raw")
 
 
-def colunas_locais(pasta: Path) -> list[tuple[str, str]]:
+def tabelas_locais():
+    for camada in ("curated", "analytics"):
+        for pasta in sorted((LAKE / camada).iterdir()):
+            yield camada, pasta
+
+
+def publicar_catalogo() -> None:
+    """catalogo.json: o que a FlexIA lê para saber tabelas, colunas, unidades, caminhos e regras."""
     con = duckdb.connect()
-    arquivo = next(pasta.rglob("*.parquet")).as_posix()
-    return [(c[0], TIPO_GLUE[c[1]]) for c in con.sql(f"describe select * from read_parquet('{arquivo}')").fetchall()]
-
-
-def criar_catalogo() -> None:
-    try:
-        glue.create_database(DatabaseInput={
-            "Name": DATABASE,
-            "Description": "Data lake do Hackathon ONS: dados ONS, clima ERA5, ANEEL e tabelas analíticas da equipe."})
-        print(f"database {DATABASE} criado")
-    except glue.exceptions.AlreadyExistsException:
-        pass
-
     ref = TABELAS["clima_era5_horario"]["colunas"]
-    for camada in ("curated", "analytics"):
-        for pasta in sorted((LAKE / camada).iterdir()):
-            nome = pasta.name
-            meta = TABELAS.get(nome, {"descricao": "", "colunas": {}})
-            desc_cols = meta["colunas"] or (ref if nome.startswith("clima_") else {})
-            particionada = any(d.name.startswith("ano=") for d in pasta.iterdir())
-            cols = [{"Name": c, "Type": t, "Comment": desc_cols.get(c, "")[:255]} for c, t in colunas_locais(pasta)]
-            local = f"s3://{BUCKET}/{camada}/{nome}/"
-            params = {"classification": "parquet", "camada": camada, "EXTERNAL": "TRUE"}
-            chaves = []
-            if particionada:
-                chaves = [{"Name": "ano", "Type": "int", "Comment": desc_cols.get("ano", "Ano (partição)")[:255]}]
-                params.update({
-                    "projection.enabled": "true",
-                    "projection.ano.type": "integer",
-                    "projection.ano.range": "2000,2030",
-                    "storage.location.template": local + "ano=${ano}/",
-                })
-            entrada = {
-                "Name": nome,
-                "Description": meta["descricao"][:2048],
-                "TableType": "EXTERNAL_TABLE",
-                "Parameters": params,
-                "PartitionKeys": chaves,
-                "StorageDescriptor": {
-                    "Columns": cols,
-                    "Location": local,
-                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
-                    "SerdeInfo": {"SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"},
-                },
-            }
-            try:
-                glue.create_table(DatabaseName=DATABASE, TableInput=entrada)
-                acao = "criada"
-            except glue.exceptions.AlreadyExistsException:
-                glue.update_table(DatabaseName=DATABASE, TableInput=entrada)
-                acao = "atualizada"
-            print(f"  glue {DATABASE}.{nome} {acao}{' (particionada por ano)' if particionada else ''}")
-
-
-def criar_workgroup() -> None:
-    cfg = {
-        "ResultConfiguration": {"OutputLocation": f"s3://{BUCKET}/athena-results/"},
-        "EnforceWorkGroupConfiguration": True,
-        "PublishCloudWatchMetricsEnabled": True,
-        "BytesScannedCutoffPerQuery": LIMITE_BYTES_CONSULTA,
-        "EngineVersion": {"SelectedEngineVersion": "Athena engine version 3"},
-    }
-    try:
-        athena.create_work_group(Name=WORKGROUP, Configuration=cfg,
-                                 Description="Consultas ao data lake do Hackathon ONS")
-        print(f"workgroup {WORKGROUP} criado")
-    except ClientError as e:
-        if "already" not in str(e).lower():
-            raise
-        athena.update_work_group(WorkGroup=WORKGROUP, ConfigurationUpdates={
-            "ResultConfigurationUpdates": cfg["ResultConfiguration"],
-            "EnforceWorkGroupConfiguration": True,
-            "BytesScannedCutoffPerQuery": LIMITE_BYTES_CONSULTA})
-
-
-def consultar(sql: str) -> list:
-    qid = athena.start_query_execution(QueryString=sql, WorkGroup=WORKGROUP,
-                                       QueryExecutionContext={"Database": DATABASE})["QueryExecutionId"]
-    while True:
-        st = athena.get_query_execution(QueryExecutionId=qid)["QueryExecution"]["Status"]
-        if st["State"] in ("SUCCEEDED", "FAILED", "CANCELLED"):
-            break
-        time.sleep(1)
-    if st["State"] != "SUCCEEDED":
-        raise RuntimeError(st.get("StateChangeReason", st["State"]))
-    linhas = athena.get_query_results(QueryExecutionId=qid)["ResultSet"]["Rows"]
-    return [[c.get("VarCharValue") for c in r["Data"]] for r in linhas[1:]]
-
-
-def validar() -> None:
-    con = duckdb.connect()
-    erros = 0
-    for camada in ("curated", "analytics"):
-        for pasta in sorted((LAKE / camada).iterdir()):
-            local = con.sql(f"select count(*) from read_parquet('{pasta.as_posix()}/**/*.parquet')").fetchone()[0]
-            remoto = int(consultar(f'SELECT count(*) FROM "{pasta.name}"')[0][0])
-            ok = "ok " if local == remoto else "ERRO"
-            erros += local != remoto
-            print(f"  {ok} {pasta.name:40s} local={local:>12,} athena={remoto:>12,}")
-    print("validação:", "tudo confere" if not erros else f"{erros} tabela(s) divergente(s)")
+    tabelas = []
+    for camada, pasta in tabelas_locais():
+        nome = pasta.name
+        meta = TABELAS.get(nome, {"descricao": "", "colunas": {}})
+        desc_cols = meta["colunas"] or (ref if nome.startswith("clima_") else {})
+        particionada = any(d.name.startswith("ano=") for d in pasta.iterdir())
+        glob = f"{pasta.as_posix()}/**/*.parquet"
+        cols = con.sql(f"describe select * from read_parquet('{glob}', hive_partitioning={str(particionada).lower()})").fetchall()
+        faixa = None
+        if particionada:
+            faixa = [int(x) for x in con.sql(
+                f"select min(ano), max(ano) from read_parquet('{glob}', hive_partitioning=true)").fetchone()]
+        tabelas.append({
+            "nome": nome,
+            "camada": camada,
+            "descricao": meta["descricao"],
+            "caminho": f"s3://{BUCKET}/{camada}/{nome}/**/*.parquet",
+            "particionada_por_ano": particionada,
+            "anos": faixa,
+            "linhas": con.sql(f"select count(*) from read_parquet('{glob}')").fetchone()[0],
+            "colunas": [{"nome": c[0], "tipo": c[1], "descricao": desc_cols.get(c[0], "")} for c in cols],
+        })
+    doc = {"bucket": BUCKET, "regras": REGRAS, "tabelas": tabelas}
+    s3.put_object(Bucket=BUCKET, Key="catalogo/catalogo.json", ContentType="application/json",
+                  Body=json.dumps(doc, ensure_ascii=False, indent=1).encode("utf-8"))
+    (BASE / "out" / "catalogo.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"catálogo: {len(tabelas)} tabelas em s3://{BUCKET}/catalogo/catalogo.json")
 
 
 def enviar_flexia() -> None:
@@ -213,28 +142,20 @@ def enviar_flexia() -> None:
 
 
 def politica_leitura_lake() -> dict:
-    arn = f"arn:aws:glue:{REGIAO}:{CONTA}"
     return {
         "Version": "2012-10-17",
         "Statement": [
-            {"Sid": "AthenaWorkgroup", "Effect": "Allow",
-             "Action": ["athena:StartQueryExecution", "athena:GetQueryExecution", "athena:GetQueryResults",
-                        "athena:StopQueryExecution", "athena:GetWorkGroup"],
-             "Resource": f"arn:aws:athena:{REGIAO}:{CONTA}:workgroup/{WORKGROUP}"},
-            {"Sid": "GlueCatalogo", "Effect": "Allow",
-             "Action": ["glue:GetDatabase", "glue:GetTable", "glue:GetTables", "glue:GetPartition", "glue:GetPartitions"],
-             "Resource": [f"{arn}:catalog", f"{arn}:database/{DATABASE}", f"{arn}:table/{DATABASE}/*"]},
-            {"Sid": "LerLake", "Effect": "Allow", "Action": ["s3:GetObject", "s3:ListBucket", "s3:GetBucketLocation"],
-             "Resource": [f"arn:aws:s3:::{BUCKET}", f"arn:aws:s3:::{BUCKET}/curated/*", f"arn:aws:s3:::{BUCKET}/analytics/*"]},
-            {"Sid": "ResultadosAthena", "Effect": "Allow",
-             "Action": ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload", "s3:ListMultipartUploadParts"],
-             "Resource": f"arn:aws:s3:::{BUCKET}/athena-results/*"},
+            {"Sid": "ListarLake", "Effect": "Allow", "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
+             "Resource": f"arn:aws:s3:::{BUCKET}"},
+            {"Sid": "LerLake", "Effect": "Allow", "Action": ["s3:GetObject"],
+             "Resource": [f"arn:aws:s3:::{BUCKET}/curated/*", f"arn:aws:s3:::{BUCKET}/analytics/*",
+                          f"arn:aws:s3:::{BUCKET}/catalogo/*", f"arn:aws:s3:::{BUCKET}/docs/*"]},
         ],
     }
 
 
 def permitir_runtimes() -> None:
-    """Anexa a política de leitura do lake às roles dos runtimes AgentCore da conta (e à role do Code Editor)."""
+    """Anexa a política SOMENTE LEITURA do lake às roles dos runtimes AgentCore da conta."""
     iam = sessao.client("iam")
     roles = set()
     try:
@@ -245,12 +166,28 @@ def permitir_runtimes() -> None:
             print(f"  runtime {r['agentRuntimeName']} -> role {det['roleArn'].split('/')[-1]}")
     except Exception as e:  # noqa: BLE001
         print(f"  aviso: não consegui listar runtimes AgentCore ({e})")
-    extra = os.environ.get("ROLES_EXTRAS", "")
-    roles.update(r for r in extra.split(",") if r)
-    doc = __import__("json").dumps(politica_leitura_lake())
+    roles.update(r for r in os.environ.get("ROLES_EXTRAS", "").split(",") if r)
+    if not roles:
+        print("  nenhuma role de runtime encontrada; implante a FlexIA e rode de novo")
+    doc = json.dumps(politica_leitura_lake())
     for role in sorted(roles):
         iam.put_role_policy(RoleName=role, PolicyName="FlexIALeituraDataLake", PolicyDocument=doc)
         print(f"  política FlexIALeituraDataLake aplicada em {role}")
+
+
+def validar() -> None:
+    """Conta as linhas de cada tabela lendo do S3 e compara com a cópia local."""
+    con = duckdb.connect()
+    con.sql("INSTALL httpfs; LOAD httpfs; INSTALL aws; LOAD aws;")
+    con.sql(f"CREATE SECRET s (TYPE s3, PROVIDER credential_chain, PROFILE '{PERFIL}', REGION '{REGIAO}')")
+    erros = 0
+    for camada, pasta in tabelas_locais():
+        local = con.sql(f"select count(*) from read_parquet('{pasta.as_posix()}/**/*.parquet')").fetchone()[0]
+        remoto = con.sql(f"select count(*) from read_parquet('s3://{BUCKET}/{camada}/{pasta.name}/**/*.parquet')").fetchone()[0]
+        ok = "ok " if local == remoto else "ERRO"
+        erros += local != remoto
+        print(f"  {ok} {pasta.name:40s} local={local:>12,} s3={remoto:>12,}", flush=True)
+    print("validação:", "tudo confere" if not erros else f"{erros} tabela(s) divergente(s)")
 
 
 def main() -> None:
@@ -260,10 +197,9 @@ def main() -> None:
         enviar_lake()
         if "--sem-raw" not in sys.argv:
             enviar_raw()
-        criar_catalogo()
-        criar_workgroup()
+        publicar_catalogo()
         enviar_flexia()
-        # Concessão de IAM só com aprovação explícita (flag). Sem ela, apenas lista o que seria alterado.
+        # Concessão de IAM só com aprovação explícita (flag).
         if "--permitir-runtimes" in sys.argv:
             permitir_runtimes()
         else:

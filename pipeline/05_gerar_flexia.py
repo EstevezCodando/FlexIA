@@ -9,7 +9,7 @@ corpo = "\n".join(f"- {r}" for r in REGRAS)
 DESTINO.parent.mkdir(parents=True, exist_ok=True)
 DESTINO.write_text(
     '"""Gerado por pipeline/05_gerar_flexia.py a partir de pipeline/catalogo.py. Não edite à mão."""\n\n'
-    f'PROMPT_DATA_LAKE = """\nDADOS DISPONÍVEIS (data lake do Hackathon ONS no Amazon Athena):\n\n'
+    f'PROMPT_DATA_LAKE = """\nDADOS DISPONÍVEIS (data lake do Hackathon ONS: Parquet no S3 consultado com DuckDB):\n\n'
     "Você tem ferramentas para consultar dados REAIS: listar_tabelas, descrever_tabela e consultar_sql.\n"
     "Fluxo obrigatório para perguntas com números: listar_tabelas -> descrever_tabela -> consultar_sql.\n"
     "Todo número na resposta deve vir de uma consulta executada; cite a tabela usada e o período.\n"
