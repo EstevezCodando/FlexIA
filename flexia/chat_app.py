@@ -54,26 +54,22 @@ def _textos_local(pergunta: str):
     sys.path.insert(0, str(Path(__file__).resolve().parent / "app" / "SINAgent"))
     import main  # noqa: PLC0415
 
-    fila: list = []
-
-    async def coletar():
-        ctx = SimpleNamespace(session_id=st.session_state.sessao)
-        async for ev in main.invoke({"prompt": pergunta}, ctx):
-            fila.append(ev)
-
     loop = asyncio.new_event_loop()
-    tarefa = loop.create_task(coletar())
-    while not tarefa.done() or fila:
-        loop.run_until_complete(asyncio.sleep(0.05)) if not tarefa.done() else None
-        while fila:
-            ev = fila.pop(0)["event"]
+    fluxo = main.invoke({"prompt": pergunta}, SimpleNamespace(session_id=st.session_state.sessao))
+    try:
+        while True:
+            try:
+                ev = loop.run_until_complete(fluxo.__anext__())["event"]
+            except StopAsyncIteration:
+                break
             delta = ev.get("contentBlockDelta", {}).get("delta", {})
             if "text" in delta:
                 yield delta["text"]
             uso = ev.get("contentBlockStart", {}).get("start", {}).get("toolUse")
             if uso:
                 yield f"\n\n`🔎 {uso['name']}`\n\n"
-    tarefa.result()
+    finally:
+        loop.close()
 
 
 def _textos_agentcore(pergunta: str):

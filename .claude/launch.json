@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flexia-chat",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-Command",
+        "$env:AWS_PROFILE='hackathon'; $env:PYTHONIOENCODING='utf-8'; .\\.venv\\Scripts\\streamlit.exe run flexia\\chat_app.py --server.port 8501 --server.headless true --browser.gatherUsageStats false"
+      ],
+      "port": 8501
+    }
+  ]
+}
