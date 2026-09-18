@@ -159,12 +159,13 @@ def sql_aneel_csv(caminho: Path, numericas: list[str], datas: list[str]) -> str:
         f"describe select * from read_csv('{caminho.as_posix()}', delim=';', header=true, all_varchar=true)").fetchall()]
     partes = []
     for c in cols:
+        # Glue/Athena tratam nomes de coluna em minúsculas
         if c in numericas:
-            partes.append(f"TRY_CAST(replace(replace(\"{c}\", '.', ''), ',', '.') AS DOUBLE) AS \"{c}\"")
+            partes.append(f"TRY_CAST(replace(replace(\"{c}\", '.', ''), ',', '.') AS DOUBLE) AS {c.lower()}")
         elif c in datas:
-            partes.append(f"TRY_CAST(\"{c}\" AS DATE) AS \"{c}\"")
+            partes.append(f"TRY_CAST(\"{c}\" AS DATE) AS {c.lower()}")
         else:
-            partes.append(f"NULLIF(trim(\"{c}\"), '') AS \"{c}\"")
+            partes.append(f"NULLIF(trim(\"{c}\"), '') AS {c.lower()}")
     return (f"SELECT {', '.join(partes)} FROM read_csv('{caminho.as_posix()}', delim=';', header=true, "
             f"all_varchar=true, quote='\"')")
 
