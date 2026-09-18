@@ -1,6 +1,9 @@
 """Testa cada ponto de partida do catálogo: status HTTP, robots.txt e tamanho do Markdown extraído."""
+import socket
 import sys
 import urllib.robotparser
+
+socket.setdefaulttimeout(15)  # robotparser não tem timeout próprio
 from urllib.parse import urlparse
 
 from cavuca.fetchers import Fetcher
