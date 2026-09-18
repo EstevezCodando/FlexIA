@@ -77,7 +77,7 @@ def aquecer() -> int:
 
 
 @tool
-def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade: int = 6) -> str:
+def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade: int = 8) -> str:
     """
     Busca trechos relevantes em documentos públicos do setor elétrico coletados periodicamente:
     notícias (ANEEL, MME, CCEE, EPE), leis e decretos do setor (Planalto), procedimentos
@@ -86,6 +86,10 @@ def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade
     Use para perguntas sobre regulação, legislação, notícias, eventos, definições e contexto.
     Para números de operação (geração, carga, CMO, corte), use consultar_sql.
     Cite sempre o título e a URL dos trechos usados.
+
+    Filtros: comece SEM o filtro `tipo` — notícias costumam trazer os números e conclusões das
+    publicações e notas técnicas. Se a resposta não aparecer nos trechos, repita a busca sem
+    nenhum filtro e com outras palavras antes de concluir que a informação não existe.
 
     Args:
         pergunta: a pergunta ou o tema a buscar, em linguagem natural.
@@ -120,7 +124,16 @@ def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade
     if not len(candidatos):
         return "Nenhum documento encontrado com esses filtros."
     k = max(1, min(int(quantidade), 10))
-    melhores = candidatos[np.argsort(-scores[candidatos])[:k]]
+    # Diversidade: no máximo 3 trechos por documento, para uma página longa não ocupar todo o
+    # resultado e esconder a notícia/lei que tem a resposta.
+    melhores, por_doc = [], {}
+    for j in candidatos[np.argsort(-scores[candidatos])]:
+        doc = idx["meta"][j]["doc_id"]
+        if por_doc.get(doc, 0) < 3:
+            melhores.append(j)
+            por_doc[doc] = por_doc.get(doc, 0) + 1
+        if len(melhores) == k:
+            break
 
     blocos = []
     for i, j in enumerate(melhores, 1):

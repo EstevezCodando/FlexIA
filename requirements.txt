@@ -1,0 +1,15 @@
+# Ambiente local (Windows, Python 3.14) usado para construir, publicar e testar o sistema.
+# Instalação:  python -m venv .venv && .venv\Scripts\python -m pip install -r requirements.txt
+duckdb==1.5.5
+pyarrow==25.0.1
+pandas==3.0.6
+openpyxl==3.1.5
+xlrd==2.0.2
+boto3==1.43.97
+numpy==2.5.3
+pypdf==6.19.0
+strands-agents==1.56.0
+bedrock-agentcore==1.23.1
+streamlit==1.64.0
+# Cavuca (coletor web), do repositório do autor, com os extras de HTTP/crawler e Markdown
+Cavuca[rag] @ git+https://github.com/EstevezCodando/Cavuca.git

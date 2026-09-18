@@ -5,7 +5,7 @@ responde. Perguntas simples ficam em modelos rápidos; cálculo e raciocínio lo
 
   rota          complexidade   modelo que responde
   conversa      -              nvidia.nemotron-nano-3-30b       (sem ferramentas)
-  fora_escopo   -              nvidia.nemotron-nano-3-30b       (recusa educada)
+  fora_escopo   -              claude haiku 4.5                 (com ferramentas; recusa só se confirmar)
   documentos    simples        claude haiku 4.5                 (buscar_documentos; fidelidade literal)
   dados         simples        claude haiku 4.5                 (SQL no lake)
   qualquer      complexa       claude sonnet 4.6                (todas as ferramentas)
@@ -37,7 +37,10 @@ rota:
 - "documentos": pede regulação, leis, resoluções, procedimentos, notícias, eventos, definições ou explicações textuais do setor.
 - "misto": precisa de números E de contexto regulatório/notícias.
 - "conversa": saudação, agradecimento, pergunta sobre a própria FlexIA.
-- "fora_escopo": nada a ver com energia/setor elétrico.
+- "fora_escopo": nada a ver com energia/setor elétrico (ex.: futebol, receitas, política geral).
+
+São DO ESCOPO (nunca "fora_escopo"): mobilidade elétrica, veículos elétricos, frota plug-in, recarga,
+tarifas de energia, consumo, clima/vento/irradiação, mercado livre, leilões, usinas, empresas do setor.
 
 complexidade:
 - "simples": uma consulta ou um fato direto.
@@ -61,8 +64,12 @@ class Decisao:
 
 
 def _perfil(rota: str, complexidade: str) -> tuple[str, bool]:
-    if rota in ("conversa", "fora_escopo"):
+    if rota == "conversa":
         return "rapido", False
+    if rota == "fora_escopo":
+        # Não recusa no roteador: em teste, o Nemotron marcou "frota de veículos elétricos do Rio"
+        # como fora de escopo em 2 de 6 tentativas. Um modelo com ferramentas confirma antes de recusar.
+        return "dados", True
     if rota == "misto" or complexidade == "complexa":
         return "raciocinio", True
     if rota == "documentos":

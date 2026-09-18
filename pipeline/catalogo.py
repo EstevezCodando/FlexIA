@@ -297,5 +297,6 @@ REGRAS = [
     "Tabelas particionadas por ano: sempre inclua filtro em ano quando a pergunta tiver período, para reduzir custo.",
     "Chaves de junção: id_ons entre tabelas ONS; ceg (ONS) = codceg (ANEEL SIGA); analytics_usina_geo.cel_lat/cel_lon = clima_era5_horario.latitude/longitude.",
     "Subsistemas: N, NE, S, SE. SIN = soma dos quatro.",
+    "Faça TODA conta e conversão de unidade dentro do SQL (ex.: sum(val_gersolar)/1e6 AS twh, round(...)); nunca converta, divida ou some números de cabeça na resposta — copie o valor que a consulta retornou.",
     "Não afirme o período coberto (ex.: 'até setembro') sem consultá-lo: use min(din_instante)/max(din_instante) na mesma consulta.",
 ]
