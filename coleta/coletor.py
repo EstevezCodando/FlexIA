@@ -30,6 +30,7 @@ from fontes import FONTES, POR_ID  # noqa: E402
 
 UA = "Mozilla/5.0 (compatible; FlexIA-Coletor/1.0; +hackathon ONS)"
 MIN_CHARS = 300
+MAX_DOC_CHARS = 80_000
 MAX_PDF_PAGINAS = 150
 MAX_PDF_BYTES = 40 * 1024 * 1024
 log = logging.getLogger("coletor")
@@ -78,12 +79,23 @@ def pdf_para_texto(dados: bytes) -> str:
 def html_para_markdown(url: str, html: str, css: str | None) -> tuple[str, str]:
     """Converte HTML já decodificado em Markdown com a limpeza do Cavuca."""
     from cavuca.engines.toolbelt.custom import Response
-    r = Response(url=url, content=html, status=200, reason="OK", cookies={}, headers={}, request_headers={})
+    def resp(conteudo: str):
+        return Response(url=url, content=conteudo, status=200, reason="OK", cookies={}, headers={}, request_headers={})
+
+    r = resp(html)
     titulo = str(r.css("title::text").get() or "").strip()
-    md = r.markdown(css_selector=css, main_content_only=True) if css else ""
-    if len(md.strip()) < MIN_CHARS:
-        md = r.markdown(main_content_only=True)
-    return titulo, md
+    md = ""
+    if css:
+        # Recorta o bloco ANTES da limpeza: em alguns portais (ex.: CCEE) o contêiner da matéria fica
+        # dentro de um elemento marcado como oculto e seria descartado inteiro. A limpeza do Cavuca
+        # (scripts, ocultos, anti prompt injection) continua sendo aplicada ao recorte.
+        # Sem o bloco esperado a página não é uma matéria (é listagem/filtro): descarta em vez de
+        # gravar o site inteiro com menus.
+        recorte = "".join(e.html_content for e in r.css(css))
+        if recorte:
+            md = resp(f"<html><body>{recorte}</body></html>").markdown(main_content_only=True)
+        return titulo, md
+    return titulo, r.markdown(main_content_only=True)
 
 
 def decodificar(conteudo: bytes, content_type: str) -> str:
@@ -121,6 +133,8 @@ class Gravador:
 
     def salvar(self, url: str, titulo: str, texto: str, formato: str) -> None:
         texto = limpar(texto)
+        if len(texto) > MAX_DOC_CHARS:  # ex.: páginas CKAN com centenas de arquivos listados
+            texto = texto[:MAX_DOC_CHARS] + f"\n\n[... documento truncado em {MAX_DOC_CHARS:,} caracteres ...]"
         if len(texto) < MIN_CHARS:
             self.curtos += 1
             return
@@ -129,6 +143,11 @@ class Gravador:
             self.iguais += 1
             return
         titulo = re.sub(r"\s+", " ", titulo or "").strip()
+        if len(titulo) < 12 or re.fullmatch(r"[A-Za-z]?\d+\w*", titulo):
+            # títulos pobres (ex.: "L14300" no Planalto): usa a primeira linha que identifica o ato
+            m = re.search(r"^[#*\s]*((LEI|DECRETO|MEDIDA PROVIS[ÓO]RIA|RESOLU[ÇC][ÃA]O|PORTARIA)[^\n]{5,140})",
+                          texto, re.I | re.M)
+            titulo = re.sub(r"[*#_\[\]]", "", m.group(1)).strip() if m else titulo
         agora = datetime.now(timezone.utc).isoformat(timespec="seconds")
         meta = {"url": url, "titulo": titulo or url, "orgao": self.fonte["orgao"], "tipo": self.fonte["tipo"],
                 "fonte": self.fonte["id"], "formato": formato, "coletado_em": agora, "sha256": sha,

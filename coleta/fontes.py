@@ -106,7 +106,8 @@ for f in FONTES:
     f.setdefault("max_paginas", 50)
     f.setdefault("ativa", True)
     # URLs de listagem: o crawl passa por elas para achar links, mas não as grava como documento
-    f.setdefault("indices", [r"[?&](b_start|page|pagina|p_p_id)[:=]", r"/noticias/?$", r"/dataset/?(\?.*)?$",
+    f.setdefault("indices", [r"[?&](b_start|page|pagina|p_p_id)[:=]", r"/noticias/?$", r"/noticias/area-\d+",
+                             r"/dataset/?(\?.*)?$",
                              r"/publicacoes/?$", r"/procedimentos-regulatorios/?$"])
 
 POR_ID = {f["id"]: f for f in FONTES}
