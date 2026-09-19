@@ -52,10 +52,13 @@ def _iniciar() -> dict:
         catalogo = json.loads(corpo.read())
 
         con = duckdb.connect()
-        # no contêiner do AgentCore o diretório pessoal pode ser somente leitura: extensões no temporário
+        # no contêiner do AgentCore não há HOME (e o diretório pessoal pode ser somente leitura):
+        # diretório pessoal, extensões e segredos do DuckDB ficam no temporário
         import tempfile
-        pasta_ext = os.path.join(tempfile.gettempdir(), "duckdb_ext").replace("\\", "/")
-        con.execute(f"SET extension_directory='{pasta_ext}'")
+        tmp = tempfile.gettempdir().replace("\\", "/")
+        con.execute(f"SET home_directory='{tmp}'")
+        con.execute(f"SET extension_directory='{tmp}/duckdb_ext'")
+        con.execute(f"SET secret_directory='{tmp}/duckdb_secrets'")
         con.execute("INSTALL httpfs; LOAD httpfs; INSTALL aws; LOAD aws;")
         con.execute(f"CREATE SECRET lake (TYPE s3, PROVIDER credential_chain, REGION '{REGIAO}')")
         con.execute("SET memory_limit='3GB'; SET threads=4;")
