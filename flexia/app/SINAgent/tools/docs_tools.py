@@ -20,7 +20,8 @@ from strands import tool
 
 from tools.data_lake_tools import _bucket
 
-REGIAO = os.environ.get("AWS_REGION", "us-east-1")
+# região do lake e dos modelos; independe da região onde o runtime roda (o AgentCore define AWS_REGION)
+REGIAO = os.environ.get("FLEXIA_REGIAO", "us-east-1")
 MODELO_EMBED = "cohere.embed-multilingual-v3"
 DIM = 1024
 RECARREGAR_S = 30 * 60
@@ -80,8 +81,12 @@ def aquecer() -> int:
 def buscar_documentos(pergunta: str, orgao: str = "", tipo: str = "", quantidade: int = 8) -> str:
     """
     Busca trechos relevantes em documentos públicos do setor elétrico coletados periodicamente:
-    notícias (ANEEL, MME, CCEE, EPE), leis e decretos do setor (Planalto), procedimentos
-    regulatórios (ANEEL/CCEE), publicações da EPE e catálogos de dados abertos (ONS, ANEEL, CCEE).
+    - Procedimentos de Rede do ONS (159 submódulos vigentes, texto integral; orgao="ONS", tipo="procedimentos")
+    - decisões das Reuniões Públicas da Diretoria da ANEEL (processo, relator, assunto, decisão, ato)
+    - leis e decretos do setor (Planalto), resoluções do CNPE, agenda regulatória e procedimentos da ANEEL,
+      regras de comercialização da CCEE
+    - notícias (ANEEL, MME, CCEE, EPE), publicações da EPE, catálogos de dados abertos (ONS, ANEEL, CCEE)
+    - manchetes de mídias do setor (só título, data, veículo e link: cite como manchete, com o link)
 
     Use para perguntas sobre regulação, legislação, notícias, eventos, definições e contexto.
     Para números de operação (geração, carga, CMO, corte), use consultar_sql.

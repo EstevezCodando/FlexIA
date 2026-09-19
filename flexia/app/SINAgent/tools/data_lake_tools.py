@@ -8,7 +8,7 @@ e só SELECT/WITH é aceito.
 
 Variáveis de ambiente:
   FLEXIA_BUCKET  bucket do lake (padrão: ons-datalake-<conta>)
-  AWS_REGION     (padrão us-east-1)
+  FLEXIA_REGIAO  região do bucket e do Bedrock (padrão us-east-1; o runtime pode estar em outra região)
 """
 import json
 import os
@@ -19,7 +19,8 @@ import boto3
 import duckdb
 from strands import tool
 
-REGIAO = os.environ.get("AWS_REGION", "us-east-1")
+# região do lake e dos modelos; independe da região onde o runtime roda (o AgentCore define AWS_REGION)
+REGIAO = os.environ.get("FLEXIA_REGIAO", "us-east-1")
 MAX_LINHAS = 200
 TIMEOUT_S = 90
 
@@ -51,6 +52,10 @@ def _iniciar() -> dict:
         catalogo = json.loads(corpo.read())
 
         con = duckdb.connect()
+        # no contêiner do AgentCore o diretório pessoal pode ser somente leitura: extensões no temporário
+        import tempfile
+        pasta_ext = os.path.join(tempfile.gettempdir(), "duckdb_ext").replace("\\", "/")
+        con.execute(f"SET extension_directory='{pasta_ext}'")
         con.execute("INSTALL httpfs; LOAD httpfs; INSTALL aws; LOAD aws;")
         con.execute(f"CREATE SECRET lake (TYPE s3, PROVIDER credential_chain, REGION '{REGIAO}')")
         con.execute("SET memory_limit='3GB'; SET threads=4;")

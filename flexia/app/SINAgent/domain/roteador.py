@@ -19,7 +19,8 @@ from dataclasses import dataclass
 
 import boto3
 
-REGIAO = os.environ.get("AWS_REGION", "us-east-1")
+# região do lake e dos modelos; independe da região onde o runtime roda (o AgentCore define AWS_REGION)
+REGIAO = os.environ.get("FLEXIA_REGIAO", "us-east-1")
 ROTEADOR = os.environ.get("FLEXIA_MODELO_ROTEADOR", "nvidia.nemotron-nano-3-30b")
 MODELOS = {
     "rapido": os.environ.get("FLEXIA_MODELO_RAPIDO", "nvidia.nemotron-nano-3-30b"),
