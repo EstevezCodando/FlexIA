@@ -4,7 +4,8 @@ O Nemotron Nano 3 30B classifica cada pergunta (~0,4 s) e o roteador escolhe o m
 responde. Perguntas simples ficam em modelos rápidos; cálculo e raciocínio longo vão para o Claude.
 
   rota          complexidade   modelo que responde
-  conversa      -              nvidia.nemotron-nano-3-30b       (sem ferramentas)
+  conversa      -              nvidia.nemotron-nano-3-30b       (sem ferramentas; só se a mensagem
+                                                                 parecer saudação/identidade — senão, Haiku)
   fora_escopo   -              claude haiku 4.5                 (com ferramentas; recusa só se confirmar)
   documentos    simples        claude haiku 4.5                 (buscar_documentos; fidelidade literal)
   dados         simples        claude haiku 4.5                 (SQL no lake)
@@ -63,9 +64,19 @@ class Decisao:
         return MODELOS[self.perfil]
 
 
-def _perfil(rota: str, complexidade: str) -> tuple[str, bool]:
+_CONVERSA = re.compile(
+    r"^\W*(oi|ol[áa]|e a[íi]|bom dia|boa tarde|boa noite|obrigad|valeu|tchau|at[ée] mais|tudo bem|"
+    r"quem [ée] voc[êe]|qual [ée] o seu nome|qual o seu nome|qual seu nome|como voc[êe] se chama|"
+    r"o que voc[êe] (faz|sabe|consegue)|como voc[êe] funciona|me ajuda)", re.I)
+
+
+def _perfil(rota: str, complexidade: str, mensagem: str = "") -> tuple[str, bool]:
     if rota == "conversa":
-        return "rapido", False
+        # Trava: em teste, o Nemotron classificou "Quantos veículos elétricos há no Rio?" como conversa
+        # em 2 de 3 vezes. Só mensagens com cara de saudação/identidade ficam sem ferramentas.
+        if _CONVERSA.search(mensagem) and len(mensagem.split()) <= 12:
+            return "rapido", False
+        return "dados", True
     if rota == "fora_escopo":
         # Não recusa no roteador: em teste, o Nemotron marcou "frota de veículos elétricos do Rio"
         # como fora de escopo em 2 de 6 tentativas. Um modelo com ferramentas confirma antes de recusar.
@@ -93,5 +104,5 @@ def classificar(mensagem: str) -> Decisao:
         comp = d.get("complexidade") if d.get("complexidade") in ("simples", "complexa") else "complexa"
     except Exception:  # noqa: BLE001
         rota, comp = "misto", "complexa"
-    perfil, ferramentas = _perfil(rota, comp)
+    perfil, ferramentas = _perfil(rota, comp, mensagem)
     return Decisao(rota, comp, perfil, ferramentas)

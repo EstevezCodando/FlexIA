@@ -1,0 +1,673 @@
+{
+ "roteador": {
+  "perguntas": 24,
+  "repeticoes": 3,
+  "acuracia_pct": 90.3,
+  "estabilidade_pct": 83.3,
+  "recusas_indevidas": 1,
+  "respondidas_sem_ferramentas_indevidamente": 0,
+  "latencia_s": {
+   "media": 0.42,
+   "p50": 0.4,
+   "p90": 0.48
+  },
+  "confusao": {
+   "conversa": {
+    "conversa": 9
+   },
+   "dados": {
+    "dados": 16,
+    "misto": 1,
+    "fora_escopo": 1
+   },
+   "documentos": {
+    "documentos": 15
+   },
+   "misto": {
+    "misto": 4,
+    "dados": 5
+   },
+   "fora_escopo": {
+    "fora_escopo": 9
+   },
+   "conversa/documentos": {
+    "conversa": 3
+   },
+   "dados/documentos": {
+    "documentos": 3
+   },
+   "dados/misto": {
+    "dados": 5,
+    "misto": 1
+   }
+  },
+  "registros": [
+   {
+    "pergunta": "Oi, tudo bem?",
+    "aceitas": [
+     "conversa"
+    ],
+    "obtidas": [
+     "conversa",
+     "conversa",
+     "conversa"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Obrigado pela ajuda!",
+    "aceitas": [
+     "conversa"
+    ],
+    "obtidas": [
+     "conversa",
+     "conversa",
+     "conversa"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual é o seu nome?",
+    "aceitas": [
+     "conversa"
+    ],
+    "obtidas": [
+     "conversa",
+     "conversa",
+     "conversa"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "O que você consegue fazer?",
+    "aceitas": [
+     "conversa",
+     "documentos"
+    ],
+    "obtidas": [
+     "conversa",
+     "conversa",
+     "conversa"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual foi o CMO médio do Sudeste em 2025?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quantos MW de capacidade solar existem na Bahia?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual foi a geração eólica do Nordeste em agosto de 2026?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quantos veículos elétricos há no Rio de Janeiro?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "misto",
+     "dados"
+    ],
+    "acertos": 2,
+    "estavel": false,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual a tarifa residencial da Light?",
+    "aceitas": [
+     "dados",
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual a carga do SIN ontem às 18h?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "O que a Lei 14.300 diz sobre compensação de energia?",
+    "aceitas": [
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quais as últimas notícias da CCEE?",
+    "aceitas": [
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "O que é o PRODIST?",
+    "aceitas": [
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual lei criou a ANEEL?",
+    "aceitas": [
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "O que a EPE publicou sobre resposta da demanda?",
+    "aceitas": [
+     "documentos"
+    ],
+    "obtidas": [
+     "documentos",
+     "documentos",
+     "documentos"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Compare o corte eólico do Nordeste em 2024 e 2025 e explique as causas regulatórias",
+    "aceitas": [
+     "misto"
+    ],
+    "obtidas": [
+     "misto",
+     "misto",
+     "misto"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "O corte de energia aumentou depois das novas regras de ressarcimento? Mostre os números.",
+    "aceitas": [
+     "misto"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 0,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quanto foi cortado em 2025 e o que o MME está fazendo sobre isso?",
+    "aceitas": [
+     "misto"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "misto"
+    ],
+    "acertos": 1,
+    "estavel": false,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quem ganhou a copa de 2022?",
+    "aceitas": [
+     "fora_escopo"
+    ],
+    "obtidas": [
+     "fora_escopo",
+     "fora_escopo",
+     "fora_escopo"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Me passe uma receita de bolo de cenoura",
+    "aceitas": [
+     "fora_escopo"
+    ],
+    "obtidas": [
+     "fora_escopo",
+     "fora_escopo",
+     "fora_escopo"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual a capital da Austrália?",
+    "aceitas": [
+     "fora_escopo"
+    ],
+    "obtidas": [
+     "fora_escopo",
+     "fora_escopo",
+     "fora_escopo"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Qual foi a evolução mensal do CMO do Nordeste em 2025 e em quais meses ficou acima de 300 R$/MWh?",
+    "aceitas": [
+     "dados",
+     "misto"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": true,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Quais usinas eólicas tiveram mais corte em 2025?",
+    "aceitas": [
+     "dados"
+    ],
+    "obtidas": [
+     "dados",
+     "dados",
+     "fora_escopo"
+    ],
+    "acertos": 2,
+    "estavel": false,
+    "sem_ferramentas_indevido": 0
+   },
+   {
+    "pergunta": "Existe relação entre vento forte e corte eólico no Nordeste?",
+    "aceitas": [
+     "dados",
+     "misto"
+    ],
+    "obtidas": [
+     "dados",
+     "misto",
+     "dados"
+    ],
+    "acertos": 3,
+    "estavel": false,
+    "sem_ferramentas_indevido": 0
+   }
+  ]
+ },
+ "respostas": {
+  "repeticoes": 2,
+  "perguntas": 13,
+  "acuracia_pct": 100.0,
+  "acuracia_por_rodada_pct": [
+   100.0,
+   100.0
+  ],
+  "por_categoria": {
+   "numerica": {
+    "acertos": 14,
+    "total": 14,
+    "acuracia_pct": 100.0
+   },
+   "documento": {
+    "acertos": 6,
+    "total": 6,
+    "acuracia_pct": 100.0
+   },
+   "sem_resposta": {
+    "acertos": 6,
+    "total": 6,
+    "acuracia_pct": 100.0
+   }
+  },
+  "latencia_s": {
+   "media": 12.2,
+   "p50": 9.3,
+   "p90": 17.4,
+   "max": 54.1
+  },
+  "execucoes": [
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Qual foi o CMO médio do subsistema Sudeste em 2025, em R$/MWh?",
+    "correta": true,
+    "segundos": 10.3,
+    "resposta_final": "Vou consultar o CMO médio do subsistema Sudeste em 2025.Agora vou descrever a tabela de CMO para entender sua estrutura:Perfeito! Agora vou consultar o CMO médio do subsistema Sudeste em 2025:**O CMO médio do subsistema Sudeste em 2025 foi de R$ 216,05/MWh.**\n\nDados:\n- **Tabela**: ons_cmo_semihorario (ONS)\n- **Período**: 01/jan/2025 a 31/dez/2025 (17.472 patamares semi-horários)\n- **Subsistema**: SE (Sudeste/Centro-Oeste)\n- **Valor**: R$ 216,05/MWh (média aritmética)",
+    "esperado": 216.047
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Qual foi a carga média do Nordeste em 2024, em MWmed?",
+    "correta": true,
+    "segundos": 10.0,
+    "resposta_final": "Vou consultar a carga média do Nordeste em 2024 para você.Agora vou descrever a tabela de balanço de energia para entender sua estrutura:Perfeito! Agora vou consultar a carga média do Nordeste em 2024:**A carga média do Nordeste em 2024 foi de 13.121,6 MWmed.**\n\nEsse valor foi calculado a partir da tabela **ons_balanco_energia_subsistema** do ONS, que cobre o período completo de 2024 (01/01/2024 a 31/12/2024). A carga horária foi agregada por média aritmética ao longo de todo o ano.",
+    "esperado": 13121.6
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Quantos TWh de energia eólica foram cortados (curtailment) no Brasil em 2025, somando todas as razões?",
+    "correta": true,
+    "segundos": 54.1,
+    "resposta_final": "lico nacional — reflexo da alta densidade de parques eólicos na região e das limitações da rede de transmissão.\n- ⚡ A razão **ENE** (restrição energética, despacho por ordem de mérito) responde por mais da metade do volume cortado.\n- 🔌 **CNF** (congestionamento de rede) representa 36,4%, indicando gargalos de transmissão relevantes.\n- ⚠️ `dsc_restricao` e `elemento_restricao` só existem a partir de 2025 e cobrem ~53% do volume; o detalhamento por equipamento limitante tem essa cobertura parcial.",
+    "esperado": 26.213
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Qual foi a geração solar total do SIN em 2025, em TWh, segundo o balanço de energia do ONS?",
+    "correta": true,
+    "segundos": 9.4,
+    "resposta_final": ".Agora vou descrever a tabela de balanço de energia para entender a estrutura dos dados de geração solar:Perfeito! Agora vou consultar a geração solar total do SIN em 2025:**A geração solar total do SIN em 2025 foi de 91,83 TWh**, segundo o balanço de energia horário do ONS (tabela `ons_balanco_energia_subsistema`).\n\nEsse valor cobre o período completo de 2025 (01/01 a 31/12, 8.760 horas), agregando a coluna `val_gersolar` (em MWmed) para o identificador `id_subsistema = 'SIN'` (total nacional).",
+    "esperado": 91.833
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Qual a potência fiscalizada total, em GW, das usinas eólicas (EOL) em operação no cadastro SIGA da ANEEL?",
+    "correta": true,
+    "segundos": 8.9,
+    "resposta_final": "ela SIGA da ANEEL para entender sua estrutura:Perfeito! Agora vou consultar a potência fiscalizada total das usinas eólicas (EOL) em operação:**A potência fiscalizada total das usinas eólicas (EOL) em operação no cadastro SIGA da ANEEL é de 34,94 GW**, distribuída entre 1.138 usinas.\n\n**Fonte:** Tabela `aneel_siga_empreendimentos` (ANEEL SIGA — cadastro nacional de empreendimentos de geração), filtrada por `sigtipogeracao = 'EOL'` e `dscfaseusina = 'Operação'`, coluna `mdapotenciafiscalizadakw`.",
+    "esperado": 34.937
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Quantos veículos plug-in (BEV + PHEV) havia na cidade do Rio de Janeiro em julho de 2026?",
+    "correta": true,
+    "segundos": 10.6,
+    "resposta_final": " sendo:\n\n| Categoria | Quantidade |\n|---|---|\n| BEV (100% elétricos) | 11.031 |\n| PHEV (híbridos plug-in) | 2.202 |\n| **Total plug-in** | **13.233** |\n\nPara contexto, esses veículos representavam cerca de **0,39%** da frota total da cidade, que era de **3.386.641 veículos**.\n\n> **Fonte:** `analytics_frota_ev_rio` (SENATRAN), referência julho/2026. A coluna `plugin` (BEV + PHEV) representa a frota que efetivamente recarrega na rede elétrica — híbridos convencionais sem tomada não estão incluídos.",
+    "esperado": 13233.0
+   },
+   {
+    "rodada": 1,
+    "cat": "numerica",
+    "pergunta": "Em que mês de 2025 o corte eólico no Nordeste foi o maior? Responda o nome do mês.",
+    "correta": true,
+    "segundos": 17.4,
+    "resposta_final": "to! Agora vou consultar o corte eólico no Nordeste (NE) em 2025, agregado por mês:Deixe-me verificar os dados disponíveis na tabela de corte mensal:Ótimo! Os dados existem. Vou consultar novamente com a grafia correta (EOLICA em maiúscula):Vejo que há múltiplas linhas por mês (provavelmente por razão/origem). Vou agregar o total por mês:**Outubro**\n\nEm 2025, o corte eólico no Nordeste foi maior em **Outubro**, com um total de **4.745.904 MWh** cortados (dados da tabela `analytics_corte_mensal`).",
+    "esperado": [
+     "outubro"
+    ]
+   },
+   {
+    "rodada": 1,
+    "cat": "documento",
+    "pergunta": "Segundo a Lei 14.300, o que é o Sistema de Compensação de Energia Elétrica (SCEE)?",
+    "correta": true,
+    "segundos": 7.4,
+    "resposta_final": "Em resumo, o SCEE é um mecanismo que permite que consumidores com geração própria (micro ou minigeração distribuída) injetem o excedente de energia na rede da distribuidora como um empréstimo gratuito, recebendo créditos que podem ser compensados com seu próprio consumo posterior ou com o de outras unidades consumidoras participantes do sistema.\n\n**Fonte:** Lei nº 14.300, de 6 de janeiro de 2022 — Presidência (Planalto)\nURL: https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2022/lei/l14300.htm",
+    "esperado": [
+     "empréstimo gratuito"
+    ]
+   },
+   {
+    "rodada": 1,
+    "cat": "documento",
+    "pergunta": "Qual lei autorizou a criação da Empresa de Pesquisa Energética (EPE)?",
+    "correta": true,
+    "segundos": 6.4,
+    "resposta_final": "esa pública vinculada ao Ministério de Minas e Energia, com a finalidade de \"prestar serviços na área de estudos e pesquisas destinadas a subsidiar o planejamento do setor energético, tais como energia elétrica, petróleo e gás natural e seus derivados, carvão mineral, fontes energéticas renováveis e eficiência energética, dentre outras\" (Art. 2º).\n\n**Fonte:** [LEI Nº 10.847, DE 15 DE MARÇO DE 2004 — Presidência (Planalto)](https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.847.htm)",
+    "esperado": [
+     "10.847"
+    ]
+   },
+   {
+    "rodada": 1,
+    "cat": "documento",
+    "pergunta": "Qual o potencial de resposta da demanda no Brasil estimado pela EPE no cenário de referência?",
+    "correta": true,
+    "segundos": 9.7,
+    "resposta_final": "5,6% a 12,4% do recorde de demanda instantânea do SIN**, sendo comparável aos mercados maduros norte-americanos, onde a resposta da demanda responde por 6,5% do pico nas RTOs e ISOs, chegando a 10,6% no MISO. Atualmente, a capacidade contratada no Brasil corresponde a apenas cerca de 0,3% do pico.\n\n**Fonte:** [EPE — Notícia de 18 de setembro de 2026](https://www.epe.gov.br/pt/imprensa/noticias/epe-estima-potencial-de-8-8-gw-de-resposta-da-demanda-no-brasil-e-propoe-aprimoramentos-para-o-mercado)",
+    "esperado": [
+     "8,8 GW",
+     "8.8 GW"
+    ]
+   },
+   {
+    "rodada": 1,
+    "cat": "sem_resposta",
+    "pergunta": "Qual foi o CMO médio do Sudeste em 2018?",
+    "correta": true,
+    "segundos": 8.1,
+    "resposta_final": " públicos do setor também não retornou o valor específico do CMO médio do Sudeste em 2018. \n\nPara obter essa informação, você precisaria:\n1. Consultar diretamente o site do ONS (www.ons.org.br) ou da CCEE, que podem ter arquivos históricos de CMO anteriores a 2020;\n2. Verificar publicações da EPE ou relatórios do CMSE (Comitê de Monitoramento do Setor Elétrico) de 2018.\n\nPosso ajudá-lo com dados de CMO a partir de 2020 ou com outras análises do SIN para 2018 que estejam disponíveis no data lake?",
+    "esperado": "admitir falta de dados"
+   },
+   {
+    "rodada": 1,
+    "cat": "sem_resposta",
+    "pergunta": "Quanta energia solar foi cortada (constrained-off) no Brasil em 2022?",
+    "correta": true,
+    "segundos": 17.3,
+    "resposta_final": "solar apenas a partir de **1º de abril de 2024**. Em 2022, não existem registros de restrição solar com razão declarada nesta base de dados.\n\nA tabela `ons_restricao_fotovoltaica_usina` (que seria a fonte primária do ONS para restrições solares) também começa apenas em abril/2024.\n\n**Conclusão:** O Brasil não possuía registros sistemáticos de constrained-off solar em 2022, ou esses dados não foram coletados/disponibilizados no data lake. A série de restrições solares documentadas começa em 2024.",
+    "esperado": "admitir falta de dados"
+   },
+   {
+    "rodada": 1,
+    "cat": "sem_resposta",
+    "pergunta": "Qual será a carga média do Nordeste em 2030?",
+    "correta": true,
+    "segundos": 4.1,
+    "resposta_final": "rga por subsistema\n2. **Relatórios de planejamento da operação** — ONS publica cenários de demanda\n3. **Estudos de demanda setorial** — MME e EPE fazem projeções por setor (industrial, residencial, comercial)\n\nPosso ajudá-lo a:\n- **Consultar dados históricos de carga do Nordeste** (2020–2024) para identificar tendências\n- **Buscar documentos públicos** (EPE, ONS, MME) que contenham projeções oficiais para 2030\n- **Analisar a evolução recente** da carga nordestina\n\nQual desses caminhos interessa?",
+    "esperado": "admitir falta de dados"
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Qual foi o CMO médio do subsistema Sudeste em 2025, em R$/MWh?",
+    "correta": true,
+    "segundos": 8.6,
+    "resposta_final": "Vou consultar o CMO médio do subsistema Sudeste em 2025.Agora vou descrever a tabela de CMO para entender sua estrutura:Perfeito! Agora vou consultar o CMO médio do subsistema Sudeste em 2025:**O CMO médio do subsistema Sudeste em 2025 foi de R$ 216,05/MWh.**\n\nDados:\n- **Tabela**: ons_cmo_semihorario (ONS)\n- **Período**: 01/01/2025 a 31/12/2025 (ano completo)\n- **Subsistema**: SE (Sudeste/Centro-Oeste)\n- **Número de patamares semi-horários**: 17.472 (2 por hora × 24 horas × 365 dias)",
+    "esperado": 216.047
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Qual foi a carga média do Nordeste em 2024, em MWmed?",
+    "correta": true,
+    "segundos": 7.4,
+    "resposta_final": "Vou consultar a carga média do Nordeste em 2024 para você.Agora vou descrever a tabela de balanço de energia para entender a estrutura de carga:Perfeito! Agora vou consultar a carga média do Nordeste em 2024:**A carga média do Nordeste em 2024 foi de 13.121,6 MWmed.**\n\nDados consultados na tabela **ons_balanco_energia_subsistema** (ONS), cobrindo o período de 1º de janeiro a 31 de dezembro de 2024 (8.784 horas).",
+    "esperado": 13121.6
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Quantos TWh de energia eólica foram cortados (curtailment) no Brasil em 2025, somando todas as razões?",
+    "correta": true,
+    "segundos": 31.5,
+    "resposta_final": "ENE) simultâneos.\n- 🔴 **ENE** (restrição de despacho por excesso de oferta) domina o ano, respondendo por **metade** do corte total.\n- 🔌 **CNF** (congestionamento de transmissão) cresceu fortemente no 2º semestre, sinalizando gargalos de rede nas regiões eólicas (principalmente NE).\n- ⚠️ **Nota metodológica:** as colunas `dsc_restricao` e `elemento_restricao` só existem a partir de 2025 e cobrem ~53% do volume de corte; os valores acima refletem a classificação disponível na base oficial do ONS.",
+    "esperado": 26.213
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Qual foi a geração solar total do SIN em 2025, em TWh, segundo o balanço de energia do ONS?",
+    "correta": true,
+    "segundos": 7.8,
+    "resposta_final": "gia do ONS.Agora vou descrever a tabela de balanço de energia para entender a estrutura:Perfeito! Agora vou consultar a geração solar total do SIN em 2025:**A geração solar total do SIN em 2025 foi de 91,83 TWh**, segundo o balanço de energia horário do ONS (tabela `ons_balanco_energia_subsistema`), cobrindo o período de 1º de janeiro a 31 de dezembro de 2025.\n\nEste valor é a soma de todos os patamares horários de geração solar verificada (coluna `val_gersolar` em MWmed) para o SIN como um todo.",
+    "esperado": 91.833
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Qual a potência fiscalizada total, em GW, das usinas eólicas (EOL) em operação no cadastro SIGA da ANEEL?",
+    "correta": true,
+    "segundos": 8.3,
+    "resposta_final": "ela SIGA da ANEEL para entender sua estrutura:Perfeito! Agora vou consultar a potência fiscalizada total das usinas eólicas (EOL) em operação:**A potência fiscalizada total das usinas eólicas (EOL) em operação no cadastro SIGA da ANEEL é de 34,94 GW**, distribuída entre 1.138 usinas.\n\n**Fonte:** Tabela `aneel_siga_empreendimentos` (ANEEL SIGA — cadastro nacional de empreendimentos de geração), filtrada por `sigtipogeracao = 'EOL'` e `dscfaseusina = 'Operação'`, coluna `mdapotenciafiscalizadakw`.",
+    "esperado": 34.937
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Quantos veículos plug-in (BEV + PHEV) havia na cidade do Rio de Janeiro em julho de 2026?",
+    "correta": true,
+    "segundos": 9.3,
+    "resposta_final": "00% elétricos) | 11.031 |\n| PHEV (híbridos plug-in) | 2.202 |\n| **Total plug-in** | **13.233** |\n\nPara contexto, a frota total da cidade era de **3.386.641 veículos**, o que significa que os plug-ins representavam cerca de **0,39%** da frota.\n\n> **Fonte:** tabela `analytics_frota_ev_rio` (SENATRAN), referência julho/2026.\n> **Nota:** o indicador `plugin` (BEV + PHEV) representa apenas os veículos que efetivamente recarregam na rede elétrica; híbridos convencionais sem tomada não estão incluídos.",
+    "esperado": 13233.0
+   },
+   {
+    "rodada": 2,
+    "cat": "numerica",
+    "pergunta": "Em que mês de 2025 o corte eólico no Nordeste foi o maior? Responda o nome do mês.",
+    "correta": true,
+    "segundos": 20.5,
+    "resposta_final": "a tabela de corte mensal para entender sua estrutura:Perfeito! Agora vou consultar o corte eólico no Nordeste (NE) em 2025, agregado por mês:Deixe-me tentar com a tabela de corte por usina, que é a base oficial:Agora vou consultar o corte eólico no Nordeste em 2025 por mês:**Outubro** foi o mês com o maior corte eólico no Nordeste em 2025.\n\nSegundo a tabela `analytics_corte_usina`, o corte eólico no Nordeste em outubro de 2025 foi de **4.745.904 MWh**, o maior volume entre todos os meses do ano.",
+    "esperado": [
+     "outubro"
+    ]
+   },
+   {
+    "rodada": 2,
+    "cat": "documento",
+    "pergunta": "Segundo a Lei 14.300, o que é o Sistema de Compensação de Energia Elétrica (SCEE)?",
+    "correta": true,
+    "segundos": 6.9,
+    "resposta_final": "istema.\"\n\nEm resumo, o SCEE é um mecanismo que permite que consumidores com geração própria (micro ou minigeração distribuída) injetem o excedente de energia na rede da distribuidora local como um \"empréstimo gratuito\", que é depois compensado (abatido) do consumo de energia daquela unidade consumidora ou contabilizado como crédito de energia.\n\n**Fonte:** Lei nº 14.300, de 6 de janeiro de 2022 — Presidência (Planalto)  \nURL: https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2022/lei/l14300.htm",
+    "esperado": [
+     "empréstimo gratuito"
+    ]
+   },
+   {
+    "rodada": 2,
+    "cat": "documento",
+    "pergunta": "Qual lei autorizou a criação da Empresa de Pesquisa Energética (EPE)?",
+    "correta": true,
+    "segundos": 6.4,
+    "resposta_final": "as e Energia.\"\n\nA lei também define, no **Art. 2º**, que a EPE tem por finalidade:\n\n> \"prestar serviços na área de estudos e pesquisas destinadas a subsidiar o planejamento do setor energético, tais como energia elétrica, petróleo e gás natural e seus derivados, carvão mineral, fontes energéticas renováveis e eficiência energética, dentre outras.\"\n\n**Fonte:** [LEI Nº 10.847, DE 15 DE MARÇO DE 2004 — Presidência (Planalto)](https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.847.htm)",
+    "esperado": [
+     "10.847"
+    ]
+   },
+   {
+    "rodada": 2,
+    "cat": "documento",
+    "pergunta": "Qual o potencial de resposta da demanda no Brasil estimado pela EPE no cenário de referência?",
+    "correta": true,
+    "segundos": 10.8,
+    "resposta_final": "e **5,6% a 12,4% do recorde de demanda instantânea do SIN**, sendo comparável aos mercados maduros norte-americanos, onde a resposta da demanda responde por 6,5% do pico nas RTOs e ISOs, chegando a 10,6% no MISO. Atualmente, a capacidade contratada no Brasil corresponde a apenas cerca de 0,3% do pico.\n\nFonte: [EPE - Notícia de 18 de setembro de 2026](https://www.epe.gov.br/pt/imprensa/noticias/epe-estima-potencial-de-8-8-gw-de-resposta-da-demanda-no-brasil-e-propoe-aprimoramentos-para-o-mercado)",
+    "esperado": [
+     "8,8 GW",
+     "8.8 GW"
+    ]
+   },
+   {
+    "rodada": 2,
+    "cat": "sem_resposta",
+    "pergunta": "Qual foi o CMO médio do Sudeste em 2018?",
+    "correta": true,
+    "segundos": 8.7,
+    "resposta_final": " dados consultáveis.\n\nOs documentos públicos do setor (notícias, legislação e publicações) que tenho acesso também não retornaram valores específicos de CMO médio do Sudeste em 2018.\n\n**Alternativas:**\n- Se você precisar de CMO para períodos **a partir de 2020**, posso consultar a tabela `ons_cmo_semihorario`.\n- Para dados históricos de 2018, recomendo consultar diretamente o [portal de dados abertos do ONS](https://www.ons.org.br/paginas/energia-agora/cmo) ou a [CCEE](https://www.ccee.org.br/).",
+    "esperado": "admitir falta de dados"
+   },
+   {
+    "rodada": 2,
+    "cat": "sem_resposta",
+    "pergunta": "Quanta energia solar foi cortada (constrained-off) no Brasil em 2022?",
+    "correta": true,
+    "segundos": 13.2,
+    "resposta_final": "ta lake.\n\n**Motivo:** A tabela `analytics_corte_usina`, que é a fonte oficial para volume de corte eólico e solar, cobre apenas o período de **outubro de 2021 a setembro de 2026**. Os dados de corte solar começam em **abril de 2024** (conforme a tabela `ons_restricao_fotovoltaica_usina`), portanto 2022 está fora do período coberto.\n\nSe você precisa de informações sobre corte solar em 2022, recomendo buscar dados em publicações históricas do ONS ou CCEE, que podem ter registros anteriores a 2024.",
+    "esperado": "admitir falta de dados"
+   },
+   {
+    "rodada": 2,
+    "cat": "sem_resposta",
+    "pergunta": "Qual será a carga média do Nordeste em 2030?",
+    "correta": true,
+    "segundos": 4.2,
+    "resposta_final": "a\n2. **Plano de Operação Energética (POE)** do ONS — que inclui cenários de carga\n3. **Estudos de demanda** do MME ou CCEE\n\nPosso ajudá-lo a:\n- **Buscar documentos** sobre projeções de carga do Nordeste (se houver notícias ou publicações recentes)\n- **Consultar a carga histórica** do Nordeste para você entender a tendência\n- **Analisar dados de operação atual** do subsistema\n\nQuer que eu busque informações sobre projeções de demanda do setor, ou prefere ver dados históricos de carga do Nordeste?",
+    "esperado": "admitir falta de dados"
+   }
+  ]
+ }
+}

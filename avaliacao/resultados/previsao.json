@@ -1,0 +1,615 @@
+{
+ "cobertura": {
+  "patamares": 11952,
+  "inicio": "2026-01-01 00:00:00",
+  "fim": "2026-09-06 23:30:00"
+ },
+ "patamares_avaliados": 11616,
+ "conferencia_real_vs_gabarito_max_dif": 1.0913936421275139e-11,
+ "regressao": {
+  "modelo": {
+   "mae_mw": 1309.6,
+   "rmse_mw": 2813.2,
+   "vies_mw": -578.5,
+   "wape_pct": 58.2,
+   "r2": 0.646,
+   "correlacao": 0.814,
+   "mae_quando_ha_corte_mw": 3892.3
+  },
+  "climatologia": {
+   "mae_mw": 1572.0,
+   "rmse_mw": 3154.5,
+   "vies_mw": -88.3,
+   "wape_pct": 69.8,
+   "r2": 0.555,
+   "correlacao": 0.748,
+   "mae_quando_ha_corte_mw": 3876.7
+  },
+  "persistencia_d1": {
+   "mae_mw": 1527.2,
+   "rmse_mw": 3377.3,
+   "vies_mw": -8.5,
+   "wape_pct": 67.8,
+   "r2": 0.49,
+   "correlacao": 0.745,
+   "mae_quando_ha_corte_mw": 4213.8
+  },
+  "persistencia_realista": {
+   "mae_mw": 1728.5,
+   "rmse_mw": 3799.2,
+   "vies_mw": -11.8,
+   "wape_pct": 76.8,
+   "r2": 0.354,
+   "correlacao": 0.677,
+   "mae_quando_ha_corte_mw": 4677.8
+  },
+  "semanal_d7": {
+   "mae_mw": 1928.8,
+   "rmse_mw": 4109.0,
+   "vies_mw": -28.5,
+   "wape_pct": 85.7,
+   "r2": 0.245,
+   "correlacao": 0.62,
+   "mae_quando_ha_corte_mw": 5077.0
+  }
+ },
+ "ganho_mae_modelo_pct": {
+  "climatologia": 16.7,
+  "persistencia_d1": 14.2,
+  "persistencia_realista": 24.2,
+  "semanal_d7": 32.1
+ },
+ "binaria": {
+  "200": {
+   "modelo": {
+    "vp": 2793,
+    "fp": 947,
+    "fn": 604,
+    "vn": 7272,
+    "acuracia_pct": 86.6,
+    "precisao_pct": 74.7,
+    "revocacao_pct": 82.2,
+    "especificidade_pct": 88.5,
+    "f1_pct": 78.3,
+    "acuracia_balanceada_pct": 85.3,
+    "prevalencia_pct": 29.2
+   },
+   "climatologia": {
+    "vp": 3182,
+    "fp": 1904,
+    "fn": 215,
+    "vn": 6315,
+    "acuracia_pct": 81.8,
+    "precisao_pct": 62.6,
+    "revocacao_pct": 93.7,
+    "especificidade_pct": 76.8,
+    "f1_pct": 75.0,
+    "acuracia_balanceada_pct": 85.3,
+    "prevalencia_pct": 29.2
+   },
+   "persistencia_d1": {
+    "vp": 2642,
+    "fp": 736,
+    "fn": 755,
+    "vn": 7483,
+    "acuracia_pct": 87.2,
+    "precisao_pct": 78.2,
+    "revocacao_pct": 77.8,
+    "especificidade_pct": 91.0,
+    "f1_pct": 78.0,
+    "acuracia_balanceada_pct": 84.4,
+    "prevalencia_pct": 29.2
+   },
+   "persistencia_realista": {
+    "vp": 2522,
+    "fp": 853,
+    "fn": 875,
+    "vn": 7366,
+    "acuracia_pct": 85.1,
+    "precisao_pct": 74.7,
+    "revocacao_pct": 74.2,
+    "especificidade_pct": 89.6,
+    "f1_pct": 74.5,
+    "acuracia_balanceada_pct": 81.9,
+    "prevalencia_pct": 29.2
+   },
+   "semanal_d7": {
+    "vp": 2435,
+    "fp": 952,
+    "fn": 962,
+    "vn": 7267,
+    "acuracia_pct": 83.5,
+    "precisao_pct": 71.9,
+    "revocacao_pct": 71.7,
+    "especificidade_pct": 88.4,
+    "f1_pct": 71.8,
+    "acuracia_balanceada_pct": 80.0,
+    "prevalencia_pct": 29.2
+   }
+  },
+  "500": {
+   "modelo": {
+    "vp": 2559,
+    "fp": 744,
+    "fn": 793,
+    "vn": 7520,
+    "acuracia_pct": 86.8,
+    "precisao_pct": 77.5,
+    "revocacao_pct": 76.3,
+    "especificidade_pct": 91.0,
+    "f1_pct": 76.9,
+    "acuracia_balanceada_pct": 83.7,
+    "prevalencia_pct": 28.9
+   },
+   "climatologia": {
+    "vp": 3058,
+    "fp": 1575,
+    "fn": 294,
+    "vn": 6689,
+    "acuracia_pct": 83.9,
+    "precisao_pct": 66.0,
+    "revocacao_pct": 91.2,
+    "especificidade_pct": 80.9,
+    "f1_pct": 76.6,
+    "acuracia_balanceada_pct": 86.1,
+    "prevalencia_pct": 28.9
+   },
+   "persistencia_d1": {
+    "vp": 2602,
+    "fp": 731,
+    "fn": 750,
+    "vn": 7533,
+    "acuracia_pct": 87.3,
+    "precisao_pct": 78.1,
+    "revocacao_pct": 77.6,
+    "especificidade_pct": 91.2,
+    "f1_pct": 77.8,
+    "acuracia_balanceada_pct": 84.4,
+    "prevalencia_pct": 28.9
+   },
+   "persistencia_realista": {
+    "vp": 2482,
+    "fp": 848,
+    "fn": 870,
+    "vn": 7416,
+    "acuracia_pct": 85.2,
+    "precisao_pct": 74.5,
+    "revocacao_pct": 74.0,
+    "especificidade_pct": 89.7,
+    "f1_pct": 74.3,
+    "acuracia_balanceada_pct": 81.9,
+    "prevalencia_pct": 28.9
+   },
+   "semanal_d7": {
+    "vp": 2400,
+    "fp": 942,
+    "fn": 952,
+    "vn": 7322,
+    "acuracia_pct": 83.7,
+    "precisao_pct": 71.8,
+    "revocacao_pct": 71.6,
+    "especificidade_pct": 88.6,
+    "f1_pct": 71.7,
+    "acuracia_balanceada_pct": 80.1,
+    "prevalencia_pct": 28.9
+   }
+  },
+  "1000": {
+   "modelo": {
+    "vp": 2269,
+    "fp": 580,
+    "fn": 975,
+    "vn": 7792,
+    "acuracia_pct": 86.6,
+    "precisao_pct": 79.6,
+    "revocacao_pct": 69.9,
+    "especificidade_pct": 93.1,
+    "f1_pct": 74.5,
+    "acuracia_balanceada_pct": 81.5,
+    "prevalencia_pct": 27.9
+   },
+   "climatologia": {
+    "vp": 2831,
+    "fp": 1317,
+    "fn": 413,
+    "vn": 7055,
+    "acuracia_pct": 85.1,
+    "precisao_pct": 68.2,
+    "revocacao_pct": 87.3,
+    "especificidade_pct": 84.3,
+    "f1_pct": 76.6,
+    "acuracia_balanceada_pct": 85.8,
+    "prevalencia_pct": 27.9
+   },
+   "persistencia_d1": {
+    "vp": 2504,
+    "fp": 722,
+    "fn": 740,
+    "vn": 7650,
+    "acuracia_pct": 87.4,
+    "precisao_pct": 77.6,
+    "revocacao_pct": 77.2,
+    "especificidade_pct": 91.4,
+    "f1_pct": 77.4,
+    "acuracia_balanceada_pct": 84.3,
+    "prevalencia_pct": 27.9
+   },
+   "persistencia_realista": {
+    "vp": 2387,
+    "fp": 837,
+    "fn": 857,
+    "vn": 7535,
+    "acuracia_pct": 85.4,
+    "precisao_pct": 74.0,
+    "revocacao_pct": 73.6,
+    "especificidade_pct": 90.0,
+    "f1_pct": 73.8,
+    "acuracia_balanceada_pct": 81.8,
+    "prevalencia_pct": 27.9
+   },
+   "semanal_d7": {
+    "vp": 2309,
+    "fp": 929,
+    "fn": 935,
+    "vn": 7443,
+    "acuracia_pct": 84.0,
+    "precisao_pct": 71.3,
+    "revocacao_pct": 71.2,
+    "especificidade_pct": 88.9,
+    "f1_pct": 71.2,
+    "acuracia_balanceada_pct": 80.0,
+    "prevalencia_pct": 27.9
+   }
+  },
+  "2000": {
+   "modelo": {
+    "vp": 1858,
+    "fp": 415,
+    "fn": 1020,
+    "vn": 8323,
+    "acuracia_pct": 87.6,
+    "precisao_pct": 81.7,
+    "revocacao_pct": 64.6,
+    "especificidade_pct": 95.3,
+    "f1_pct": 72.1,
+    "acuracia_balanceada_pct": 79.9,
+    "prevalencia_pct": 24.8
+   },
+   "climatologia": {
+    "vp": 2369,
+    "fp": 1097,
+    "fn": 509,
+    "vn": 7641,
+    "acuracia_pct": 86.2,
+    "precisao_pct": 68.3,
+    "revocacao_pct": 82.3,
+    "especificidade_pct": 87.4,
+    "f1_pct": 74.7,
+    "acuracia_balanceada_pct": 84.9,
+    "prevalencia_pct": 24.8
+   },
+   "persistencia_d1": {
+    "vp": 2185,
+    "fp": 677,
+    "fn": 693,
+    "vn": 8061,
+    "acuracia_pct": 88.2,
+    "precisao_pct": 76.3,
+    "revocacao_pct": 75.9,
+    "especificidade_pct": 92.3,
+    "f1_pct": 76.1,
+    "acuracia_balanceada_pct": 84.1,
+    "prevalencia_pct": 24.8
+   },
+   "persistencia_realista": {
+    "vp": 2090,
+    "fp": 769,
+    "fn": 788,
+    "vn": 7969,
+    "acuracia_pct": 86.6,
+    "precisao_pct": 73.1,
+    "revocacao_pct": 72.6,
+    "especificidade_pct": 91.2,
+    "f1_pct": 72.9,
+    "acuracia_balanceada_pct": 81.9,
+    "prevalencia_pct": 24.8
+   },
+   "semanal_d7": {
+    "vp": 2006,
+    "fp": 861,
+    "fn": 872,
+    "vn": 7877,
+    "acuracia_pct": 85.1,
+    "precisao_pct": 70.0,
+    "revocacao_pct": 69.7,
+    "especificidade_pct": 90.1,
+    "f1_pct": 69.8,
+    "acuracia_balanceada_pct": 79.9,
+    "prevalencia_pct": 24.8
+   }
+  }
+ },
+ "sinal_3_niveis": {
+  "modelo": {
+   "matriz_real_x_previsto": {
+    "VERMELHO": {
+     "VERMELHO": 7272,
+     "AMARELO": 419,
+     "VERDE": 528
+    },
+    "AMARELO": {
+     "VERMELHO": 72,
+     "AMARELO": 29,
+     "VERDE": 52
+    },
+    "VERDE": {
+     "VERMELHO": 532,
+     "AMARELO": 443,
+     "VERDE": 2269
+    }
+   },
+   "acuracia_pct": 82.4,
+   "f1_macro_pct": 56.8,
+   "kappa_cohen": 0.609,
+   "por_nivel": {
+    "VERMELHO": {
+     "precisao_pct": 92.3,
+     "revocacao_pct": 88.5,
+     "f1_pct": 90.4,
+     "patamares_reais": 8219
+    },
+    "AMARELO": {
+     "precisao_pct": 3.3,
+     "revocacao_pct": 19.0,
+     "f1_pct": 5.6,
+     "patamares_reais": 153
+    },
+    "VERDE": {
+     "precisao_pct": 79.6,
+     "revocacao_pct": 69.9,
+     "f1_pct": 74.5,
+     "patamares_reais": 3244
+    }
+   }
+  },
+  "climatologia": {
+   "matriz_real_x_previsto": {
+    "VERMELHO": {
+     "VERMELHO": 6315,
+     "AMARELO": 672,
+     "VERDE": 1232
+    },
+    "AMARELO": {
+     "VERMELHO": 36,
+     "AMARELO": 32,
+     "VERDE": 85
+    },
+    "VERDE": {
+     "VERMELHO": 179,
+     "AMARELO": 234,
+     "VERDE": 2831
+    }
+   },
+   "acuracia_pct": 79.0,
+   "f1_macro_pct": 56.0,
+   "kappa_cohen": 0.581,
+   "por_nivel": {
+    "VERMELHO": {
+     "precisao_pct": 96.7,
+     "revocacao_pct": 76.8,
+     "f1_pct": 85.6,
+     "patamares_reais": 8219
+    },
+    "AMARELO": {
+     "precisao_pct": 3.4,
+     "revocacao_pct": 20.9,
+     "f1_pct": 5.9,
+     "patamares_reais": 153
+    },
+    "VERDE": {
+     "precisao_pct": 68.2,
+     "revocacao_pct": 87.3,
+     "f1_pct": 76.6,
+     "patamares_reais": 3244
+    }
+   }
+  },
+  "persistencia_d1": {
+   "matriz_real_x_previsto": {
+    "VERMELHO": {
+     "VERMELHO": 7483,
+     "AMARELO": 75,
+     "VERDE": 661
+    },
+    "AMARELO": {
+     "VERMELHO": 86,
+     "AMARELO": 6,
+     "VERDE": 61
+    },
+    "VERDE": {
+     "VERMELHO": 669,
+     "AMARELO": 71,
+     "VERDE": 2504
+    }
+   },
+   "acuracia_pct": 86.0,
+   "f1_macro_pct": 57.4,
+   "kappa_cohen": 0.668,
+   "por_nivel": {
+    "VERMELHO": {
+     "precisao_pct": 90.8,
+     "revocacao_pct": 91.0,
+     "f1_pct": 90.9,
+     "patamares_reais": 8219
+    },
+    "AMARELO": {
+     "precisao_pct": 3.9,
+     "revocacao_pct": 3.9,
+     "f1_pct": 3.9,
+     "patamares_reais": 153
+    },
+    "VERDE": {
+     "precisao_pct": 77.6,
+     "revocacao_pct": 77.2,
+     "f1_pct": 77.4,
+     "patamares_reais": 3244
+    }
+   }
+  },
+  "persistencia_realista": {
+   "matriz_real_x_previsto": {
+    "VERMELHO": {
+     "VERMELHO": 7366,
+     "AMARELO": 76,
+     "VERDE": 777
+    },
+    "AMARELO": {
+     "VERMELHO": 82,
+     "AMARELO": 11,
+     "VERDE": 60
+    },
+    "VERDE": {
+     "VERMELHO": 793,
+     "AMARELO": 64,
+     "VERDE": 2387
+    }
+   },
+   "acuracia_pct": 84.1,
+   "f1_macro_pct": 56.8,
+   "kappa_cohen": 0.621,
+   "por_nivel": {
+    "VERMELHO": {
+     "precisao_pct": 89.4,
+     "revocacao_pct": 89.6,
+     "f1_pct": 89.5,
+     "patamares_reais": 8219
+    },
+    "AMARELO": {
+     "precisao_pct": 7.3,
+     "revocacao_pct": 7.2,
+     "f1_pct": 7.2,
+     "patamares_reais": 153
+    },
+    "VERDE": {
+     "precisao_pct": 74.0,
+     "revocacao_pct": 73.6,
+     "f1_pct": 73.8,
+     "patamares_reais": 3244
+    }
+   }
+  },
+  "semanal_d7": {
+   "matriz_real_x_previsto": {
+    "VERMELHO": {
+     "VERMELHO": 7267,
+     "AMARELO": 83,
+     "VERDE": 869
+    },
+    "AMARELO": {
+     "VERMELHO": 85,
+     "AMARELO": 8,
+     "VERDE": 60
+    },
+    "VERDE": {
+     "VERMELHO": 877,
+     "AMARELO": 58,
+     "VERDE": 2309
+    }
+   },
+   "acuracia_pct": 82.5,
+   "f1_macro_pct": 55.0,
+   "kappa_cohen": 0.584,
+   "por_nivel": {
+    "VERMELHO": {
+     "precisao_pct": 88.3,
+     "revocacao_pct": 88.4,
+     "f1_pct": 88.4,
+     "patamares_reais": 8219
+    },
+    "AMARELO": {
+     "precisao_pct": 5.4,
+     "revocacao_pct": 5.2,
+     "f1_pct": 5.3,
+     "patamares_reais": 153
+    },
+    "VERDE": {
+     "precisao_pct": 71.3,
+     "revocacao_pct": 71.2,
+     "f1_pct": 71.2,
+     "patamares_reais": 3244
+    }
+   }
+  }
+ },
+ "energia_diaria": {
+  "dias": 249,
+  "mae_modelo_mwh": 27150.0,
+  "mae_climatologia_mwh": 33103.0,
+  "wape_modelo_pct": 50.9,
+  "correlacao": 0.76,
+  "r2": 0.491,
+  "media_real_mwh_dia": 53389.0
+ },
+ "hora_de_pico": {
+  "dias_com_corte": 201,
+  "exata_pct": 40.8,
+  "mais_menos_1h_pct": 69.2,
+  "mais_menos_2h_pct": 82.1
+ },
+ "por_mes": [
+  {
+   "mes": 1,
+   "mae_modelo_mw": 1054.0,
+   "mae_climatologia_mw": 1423.0,
+   "real_medio_mw": 1137.0
+  },
+  {
+   "mes": 2,
+   "mae_modelo_mw": 523.0,
+   "mae_climatologia_mw": 985.0,
+   "real_medio_mw": 700.0
+  },
+  {
+   "mes": 3,
+   "mae_modelo_mw": 1136.0,
+   "mae_climatologia_mw": 1026.0,
+   "real_medio_mw": 1446.0
+  },
+  {
+   "mes": 4,
+   "mae_modelo_mw": 1174.0,
+   "mae_climatologia_mw": 1113.0,
+   "real_medio_mw": 2052.0
+  },
+  {
+   "mes": 5,
+   "mae_modelo_mw": 1484.0,
+   "mae_climatologia_mw": 1638.0,
+   "real_medio_mw": 2752.0
+  },
+  {
+   "mes": 6,
+   "mae_modelo_mw": 1369.0,
+   "mae_climatologia_mw": 2070.0,
+   "real_medio_mw": 1980.0
+  },
+  {
+   "mes": 7,
+   "mae_modelo_mw": 1733.0,
+   "mae_climatologia_mw": 2148.0,
+   "real_medio_mw": 3620.0
+  },
+  {
+   "mes": 8,
+   "mae_modelo_mw": 1687.0,
+   "mae_climatologia_mw": 1822.0,
+   "real_medio_mw": 3949.0
+  },
+  {
+   "mes": 9,
+   "mae_modelo_mw": 2059.0,
+   "mae_climatologia_mw": 2333.0,
+   "real_medio_mw": 2220.0
+  }
+ ]
+}

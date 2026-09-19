@@ -151,8 +151,9 @@ Modo `agentcore` (depois do deploy): `$env:FLEXIA_MODO = "agentcore"; $env:FLEXI
 
 ## 6. Avaliação
 ```powershell
-.venv\Scripts\python avaliacao\avaliar_previsao.py   # métricas da previsão D+1 -> out\avaliacao_previsao.json
-.venv\Scripts\python avaliacao\avaliar_flexia.py     # 10 perguntas com gabarito -> out\avaliacao_flexia.json
+.venv\Scripts\python avaliacao\avaliar_previsao.py                  # métricas da previsão D+1 -> avaliacao\resultados\previsao.{json,md}
+.venv\Scripts\python avaliacao\avaliar_flexia.py --repeticoes 2     # roteador + 13 perguntas x 2 -> avaliacao\resultados\flexia.{json,md}
+.venv\Scripts\python avaliacao\avaliar_flexia.py --so-roteador      # só o roteador (~30 s)
 ```
 Rode `avaliar_flexia.py` depois de qualquer mudança no prompt, nas regras, no roteador ou na busca.
 

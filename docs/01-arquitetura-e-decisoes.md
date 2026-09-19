@@ -163,7 +163,7 @@ repositório, `flexia/app/SINAgent/`) substitui o `main.py` inteiro.
 
 | rota / complexidade | modelo que responde | ferramentas |
 |---|---|---|
-| conversa | NVIDIA Nemotron Nano 3 30B | nenhuma |
+| conversa (só saudação/identidade; senão vai ao Haiku) | NVIDIA Nemotron Nano 3 30B | nenhuma |
 | dados simples | Claude Haiku 4.5 | todas |
 | documentos | Claude Haiku 4.5 | todas |
 | fora_escopo | Claude Haiku 4.5 (recusa só se confirmar) | todas |

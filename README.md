@@ -20,9 +20,9 @@ pergunta e **Claude** (Amazon Bedrock) para responder.
 | Publicação no S3 + dicionário de dados | Feita | `s3://ons-datalake-899110172465`; contagens conferidas lendo do S3 (33/33) |
 | Coletor Cavuca de 15 fontes do setor, respeitando robots.txt | Feito (12 fontes ativas) | 392 documentos coletados; 384 versões atuais indexadas em 2.433 trechos |
 | Busca semântica em documentos (RAG) | Feita | Cohere Embed Multilingual v3 + busca híbrida em memória |
-| FlexIA v2 (Strands + AgentCore) com roteamento NVIDIA Nemotron | Feita e testada localmente | 10/10 na avaliação de exatidão, 17,6 s em média |
+| FlexIA v2 (Strands + AgentCore) com roteamento NVIDIA Nemotron | Feita e testada localmente | 26/26 respostas corretas (13 perguntas × 2 rodadas), mediana 9,3 s; roteador 90,3 % |
 | Chat web (Streamlit) com streaming | Feito (roda local) | `streamlit run flexia/chat_app.py` |
-| Avaliação da previsão D+1 de corte ENE (modelo da equipe) | Feita | MAE 1.310 MWmed; 16,7 % melhor que a climatologia |
+| Avaliação da previsão D+1 de corte ENE (modelo da equipe) | Feita | R² 0,646; MAE 1.310 MWmed (24 % melhor que a persistência realista); acurácia 86,8 % e F1 76,9 % para "corte ≥ 500 MWmed" |
 | Implantação da FlexIA no AgentCore | **Pendente** — o usuário cola 2 scripts no Code Editor e roda `agentcore deploy` | [flexia/instalar_flexia_v2.sh](flexia/instalar_flexia_v2.sh) |
 | Coleta agendada (cron) | **Pendente** — mesmo motivo | [flexia/instalar_coletor_agendado.sh](flexia/instalar_coletor_agendado.sh) |
 | Link público para terceiros | **Não entregue** — a conta bloqueia CloudFront, API Gateway e Lambda com role própria | ver [docs/01-arquitetura-e-decisoes.md](docs/01-arquitetura-e-decisoes.md#8-acesso-externo) |
@@ -34,7 +34,7 @@ pergunta e **Claude** (Amazon Bedrock) para responder.
 | [docs/01-arquitetura-e-decisoes.md](docs/01-arquitetura-e-decisoes.md) | Arquitetura, cada escolha feita, alternativas descartadas e por quê |
 | [docs/02-reproduzir-e-operar.md](docs/02-reproduzir-e-operar.md) | Passo a passo do zero: ambiente, curadoria, publicação, coleta, índice, FlexIA, chat, deploy, cron, renovação de credenciais, problemas comuns |
 | [docs/03-dados-e-fontes.md](docs/03-dados-e-fontes.md) | Tabelas do lake, layout do bucket, regras de negócio, fontes coletadas e situação de cada uma |
-| [docs/04-avaliacao.md](docs/04-avaliacao.md) | Precisão da previsão D+1 com dados históricos e exatidão das respostas da FlexIA, com o histórico de falhas e correções |
+| [docs/04-avaliacao.md](docs/04-avaliacao.md) | Métricas da previsão D+1 (regressão, matriz de confusão, precisão, revocação, F1, kappa) e exatidão da FlexIA e do roteador; resultados brutos em [avaliacao/resultados/](avaliacao/resultados/) |
 
 ## Estrutura do repositório
 
