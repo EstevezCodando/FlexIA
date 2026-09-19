@@ -14,6 +14,9 @@ from pathlib import Path
 
 import streamlit as st
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cliente import aquecer_local, perguntar  # noqa: E402
 from marca import AVATAR_IA, AVATAR_USUARIO, LOGO_SVG, data_uri  # noqa: E402

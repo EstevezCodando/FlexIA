@@ -9,45 +9,70 @@ no dia a dia. Comandos em PowerShell na máquina local, salvo quando indicado "C
 |---|---|
 | Windows 10+ com Python 3.12+ | testado com Python 3.14 |
 | Git | o projeto é um repositório git; commite antes de qualquer mudança |
-| Acervo da equipe | `C:\Hackathon_ONS` (só é lido; mude com a variável `ORIGEM`) |
+| Acervo da equipe | `C:\Hackathon_ONS` (só é lido; mude `ORIGEM` no `.env`) |
 | Conta AWS em `us-east-1` | com acesso ao Bedrock (Claude Haiku 4.5, Claude Sonnet 4.6, NVIDIA Nemotron Nano 3 30B, Cohere Embed Multilingual v3) |
-| Perfil AWS local | nome padrão `hackathon` (mude com `AWS_PROFILE`) |
-| Espaço em disco | ~15 GB livres (origem 9 GB + lake 2 GB + temporários) |
+| Espaço em disco | ~15 GB livres (origem 9 GB + lake 3 GB + temporários) |
 | Memória | 16 GB+ (a curadoria usa até 16 GB no DuckDB) |
 
-## 1. Ambiente local
+## 1. Configuração inicial (um comando)
+
+Toda a configuração fica num único arquivo, **`.env`** na raiz (fora do git). O modelo comentado
+de todas as variáveis está em [`.env.example`](../.env.example); o [`config.py`](../config.py) carrega
+o `.env` em todos os scripts (prioridade: variável do terminal > `.env` > padrão).
 
 ```powershell
-cd C:\Desenvolvimento\AWS
-python -m venv .venv
-.venv\Scripts\python -m pip install --upgrade pip
-.venv\Scripts\python -m pip install -r requirements.txt
+git clone <repositório> C:\Desenvolvimento\AWS; cd C:\Desenvolvimento\AWS
+Set-ExecutionPolicy -Scope Process Bypass        # só nesta janela, para rodar o .ps1
+.\configurar.ps1
 ```
 
-## 2. Credenciais AWS (conta do workshop)
+O [`configurar.ps1`](../configurar.ps1) faz, nesta ordem:
 
-As credenciais do Workshop Studio são **temporárias** (expiram em poucas horas). O próprio usuário
-deve gravá-las; nenhum script deste projeto grava ou imprime credenciais.
+| etapa | o que faz |
+|---|---|
+| 1 | cria `.venv` e instala `requirements.txt` (inclui o Cavuca do GitHub) |
+| 2 | cria `.env` a partir de `.env.example`, se não existir |
+| 3 | roda [`infra/verificar.py`](../infra/verificar.py): credenciais (STS), bucket e catálogo, uma chamada mínima a cada modelo do Bedrock, instância do Code Editor (SSM) e runtime AgentCore. Preenche no `.env` o que descobrir e estiver vazio (`FLEXIA_BUCKET`, `CODE_EDITOR_INSTANCIA`, `FLEXIA_RUNTIME_ARN`). Não altera nada na AWS |
+
+Opções (combináveis):
+
+| opção | o que faz |
+|---|---|
+| `-SalvarCredenciais` | grava no `.env` as chaves `$Env:AWS_*` coladas no terminal |
+| `-Publicar` | `05_gerar_flexia.py` + `04_publicar.py --sem-raw` (lake, catálogo, código da FlexIA e do coletor no S3) |
+| `-Coletar` | coleta as fontes regulatórias do Desafio 1 e reindexa os documentos |
+| `-Implantar` | implanta a FlexIA no AgentCore pelo Code Editor (SSM), dá à role do runtime **leitura** do lake e grava o ARN no `.env` |
+| `-Agendar` | instala a coleta agendada (cron) no Code Editor |
+| `-Tudo` | `-Publicar -Coletar -Implantar -Agendar` |
+| `-Chat` | abre o chat no final (`http://localhost:8501`) |
+| `-SemInstalar` | pula venv/pip |
+
+Sequência completa numa conta nova: `.\configurar.ps1 -SalvarCredenciais -Tudo -Chat`
+(o lake local em `out\lake` precisa existir: seção 3).
+
+## 2. Credenciais AWS
+
+**Conta do workshop (chaves temporárias, expiram em poucas horas):**
 
 1. No painel do evento, clique em **Get AWS CLI credentials** e copie o bloco PowerShell (`$Env:AWS_...`).
-2. Cole no PowerShell e, **no mesmo terminal**, grave o perfil:
+2. Cole no PowerShell e, **no mesmo terminal**, rode:
    ```powershell
-   New-Item -ItemType Directory -Force "$HOME\.aws" | Out-Null; "[hackathon]`naws_access_key_id = $Env:AWS_ACCESS_KEY_ID`naws_secret_access_key = $Env:AWS_SECRET_ACCESS_KEY`naws_session_token = $Env:AWS_SESSION_TOKEN`nregion = us-east-1`n" | Set-Content -Encoding ascii "$HOME\.aws\credentials"
+   .\configurar.ps1 -SemInstalar -SalvarCredenciais
    ```
-3. Teste (deve imprimir um ARN `...:assumed-role/WSParticipantRole/Participant`):
-   ```powershell
-   .venv\Scripts\python -c "import boto3;print(boto3.Session(profile_name='hackathon').client('sts').get_caller_identity()['Arn'])"
-   ```
-   `InvalidClientTokenId` = o arquivo foi gravado antes das variáveis ou com credenciais vencidas.
-   Se o painel devolver sempre as mesmas chaves vencidas, gere-as no terminal do Code Editor com
-   `aws configure export-credentials --format powershell`.
+   As três chaves vão para o `.env`, e a verificação deve mostrar
+   `OK credenciais AWS arn:aws:sts::<conta>:assumed-role/WSParticipantRole/Participant`.
+3. Ao ver `ExpiredToken`, repita os passos 1 e 2. Se o painel devolver sempre chaves vencidas,
+   gere-as no terminal do Code Editor com `aws configure export-credentials --format powershell`.
 
-Em outra conta, use qualquer perfil com permissão de S3 e Bedrock.
+**Outra conta:** deixe as chaves vazias e ponha em `AWS_PROFILE` o nome de um perfil do
+`~/.aws/credentials` com permissão de S3 e Bedrock (sem chaves nem perfil, o padrão é `hackathon`).
+
+Nenhum script imprime credenciais, e o `.env` está no `.gitignore`. Antes de publicar o repositório,
+confira com `git status` que o `.env` não aparece.
 
 ## 3. Data lake
 
 ```powershell
-$env:PYTHONIOENCODING = "utf-8"
 .venv\Scripts\python pipeline\01_inventario.py        # ~5 min: SHA-256 de 7.770 arquivos -> out\inventario.csv
 .venv\Scripts\python pipeline\02_perfil_esquemas.py   # variações de esquema -> out\esquemas.json
 .venv\Scripts\python pipeline\03_curar.py             # ~10 min: out\lake\curated e out\lake\analytics
@@ -60,17 +85,17 @@ $env:PYTHONIOENCODING = "utf-8"
 ### Publicar no S3
 
 ```powershell
-$env:AWS_PROFILE = "hackathon"
 .venv\Scripts\python pipeline\04_publicar.py            # bucket + upload + catalogo.json + validação
 .venv\Scripts\python pipeline\04_publicar.py --sem-raw  # pula os brutos (2,5 GB)
 .venv\Scripts\python pipeline\04_publicar.py --validar  # só confere as contagens lendo do S3
 ```
 
-- Bucket: `ons-datalake-<conta>` (ou `BUCKET=...`), privado (Block Public Access), criptografado
+- Bucket: `ons-datalake-<conta>` (ou `FLEXIA_BUCKET` no `.env`), privado (Block Public Access), criptografado
   (SSE-S3) e versionado. O upload é incremental (pula arquivos já enviados com o mesmo tamanho).
-- A validação deve terminar com `validação: tudo confere` (33 tabelas).
+- A validação deve terminar com `validação: tudo confere` (116 tabelas).
 - `--permitir-runtimes` anexa às roles dos runtimes AgentCore a política **somente leitura** do
-  lake. Use só depois do deploy da FlexIA e com decisão explícita.
+  lake. Use só depois do deploy da FlexIA e com decisão explícita. `--validar --permitir-runtimes`
+  aplica só a permissão e confere, sem reenviar nada.
 - Depois de mudar `pipeline/catalogo.py`, rode `pipeline\05_gerar_flexia.py` para atualizar as
   regras do prompt, e `04_publicar.py --sem-raw` para atualizar o `catalogo.json` e o código no S3.
 
@@ -85,16 +110,15 @@ $env:AWS_PROFILE = "hackathon"
 
 ### Coleta completa para o S3
 ```powershell
-$env:AWS_PROFILE = "hackathon"; $env:FLEXIA_BUCKET = "ons-datalake-899110172465"
 foreach ($f in 'diaria','semanal','mensal') { .venv\Scripts\python coleta\coletor.py --frequencia $f }
 .venv\Scripts\python coleta\indexar.py
 ```
 A primeira coleta completa leva ~45 min (os portais CKAN exigem 10 s entre páginas). Coletas
 seguintes gravam só o que mudou; o indexador pula fontes sem mudança.
 
-### Agendamento (Code Editor, bash)
-Cole o conteúdo de [flexia/instalar_coletor_agendado.sh](../flexia/instalar_coletor_agendado.sh) no
-terminal do Code Editor. Ele baixa o coletor do S3 (`deploy/coletor/`), cria um venv com o Cavuca,
+### Agendamento (Code Editor)
+`.\configurar.ps1 -SemInstalar -Agendar` executa [flexia/instalar_coletor_agendado.sh](../flexia/instalar_coletor_agendado.sh)
+no Code Editor via SSM (ou cole o script no terminal do Code Editor). Ele baixa o coletor do S3 (`deploy/coletor/`), cria um venv com o Cavuca,
 testa a permissão da instância no bucket, instala o cron (horário de Brasília) e roda a coleta
 diária uma vez:
 
@@ -117,33 +141,43 @@ Logs: `~/flexia-coletor/logs/<frequencia>-AAAAMMDD.log`. Rodar à mão: `~/flexi
 
 ### Teste local
 ```powershell
-$env:AWS_PROFILE = "hackathon"; $env:PYTHONIOENCODING = "utf-8"
 .venv\Scripts\python flexia\testar_local.py "Oi, qual seu nome?" "Qual foi o CMO médio de cada subsistema em 2025?" "E em 2024, subiu ou caiu no Sudeste?"
 ```
 Todas as perguntas de uma execução usam a mesma sessão (testa o contexto da conversa).
 
 ### Chat
 ```powershell
-$env:AWS_PROFILE = "hackathon"
 .venv\Scripts\streamlit run flexia\web\app.py      # http://localhost:8501
 ```
 Ao mudar o CSS ou o símbolo (`flexia/web/tema.py`, `marca.py`), reinicie o Streamlit: módulos importados não recarregam sozinhos.
-Modo `agentcore` (depois do deploy): `$env:FLEXIA_MODO = "agentcore"; $env:FLEXIA_RUNTIME_ARN = "<arn do runtime>"`.
+Modo `agentcore` (depois do deploy): `FLEXIA_MODO=agentcore` no `.env` (o `FLEXIA_RUNTIME_ARN` é preenchido pelo `configurar.ps1 -Implantar`).
 
-### Instalar e implantar no AgentCore (Code Editor, bash)
-1. (Uma vez) cole [workshop/flexia_agent_v1.sh](../workshop/flexia_agent_v1.sh) se o projeto ainda
-   estiver com o agente original do workshop.
-2. Cole [flexia/instalar_flexia_v2.sh](../flexia/instalar_flexia_v2.sh): commita o estado atual,
-   baixa o código do S3 (`flexia/app/SINAgent/`), inclui `boto3`, `duckdb` e `numpy` no
-   `requirements.txt`, valida e faz um teste com `agentcore dev`.
-3. `agentcore deploy`.
-4. Na máquina local: `pipeline\04_publicar.py --sem-raw --permitir-runtimes` para dar ao runtime a
-   leitura do lake (confira as roles listadas antes de confirmar).
+### Implantar no AgentCore
 
-### Variáveis de ambiente da FlexIA
+Da máquina local, sem abrir o Code Editor: `.\configurar.ps1 -SemInstalar -Publicar -Implantar`.
+Por baixo, [`infra/code_editor.py`](../infra/code_editor.py) envia
+[`flexia/implantar_flexia.sh`](../flexia/implantar_flexia.sh) para a instância do Code Editor via
+Systems Manager (Run Command, como o usuário `participant`, com a role da instância). O script:
+
+1. commita o estado atual do projeto `~/build-with-skills/SINIntelligence`;
+2. baixa o código da FlexIA do S3 (`flexia/app/SINAgent/`);
+3. inclui `duckdb`, `numpy` e `boto3` nas dependências do `pyproject.toml` (o projeto usa `uv`);
+4. compila os `.py` e roda `agentcore validate`;
+5. preenche `agentcore/aws-targets.json` com a conta e a região do CDK (`us-west-2`), se estiver vazio;
+6. roda `agentcore deploy --target default --yes` e `agentcore status`, e commita o resultado.
+
+Depois, `04_publicar.py --validar --permitir-runtimes` anexa às roles dos runtimes a política
+somente leitura do lake, e `infra/verificar.py` grava o ARN do runtime no `.env`.
+
+Outros comandos no Code Editor: `.venv\Scripts\python infra\code_editor.py "agentcore status"`.
+Se o projeto ainda estiver com o agente original do workshop, rode antes
+[workshop/flexia_agent_v1.sh](../workshop/flexia_agent_v1.sh) do mesmo jeito (`--arquivo`).
+
+### Variáveis de ambiente da FlexIA (todas no `.env`)
 | variável | padrão | uso |
 |---|---|---|
 | `FLEXIA_BUCKET` | `ons-datalake-<conta>` | bucket do lake |
+| `FLEXIA_REGIAO` | `AWS_REGION` (`us-east-1`) | região do bucket e do Bedrock (o runtime roda em `us-west-2`) |
 | `FLEXIA_MODELO_ROTEADOR` | `nvidia.nemotron-nano-3-30b` | classificador |
 | `FLEXIA_MODELO_RAPIDO` | `nvidia.nemotron-nano-3-30b` | conversa |
 | `FLEXIA_MODELO_DADOS` | `us.anthropic.claude-haiku-4-5-20251001-v1:0` | dados simples, fora de escopo |
@@ -162,7 +196,7 @@ Rode `avaliar_flexia.py` depois de qualquer mudança no prompt, nas regras, no r
 
 | sintoma | causa | solução |
 |---|---|---|
-| `InvalidClientTokenId` / `ExpiredToken` | credenciais do workshop vencidas | regravar o perfil (seção 2) |
+| `InvalidClientTokenId` / `ExpiredToken` | credenciais do workshop vencidas | `.\configurar.ps1 -SemInstalar -SalvarCredenciais` (seção 2) |
 | `AccessDeniedException ... glue/athena` | conta do workshop bloqueia | não use Glue/Athena; o lake é lido pelo DuckDB |
 | primeira consulta demora ~40 s | instalação das extensões DuckDB | normal na 1ª execução; no agente o aquecimento roda na inicialização |
 | `Permission Error ... file system operations are disabled` | isolamento do DuckDB | esperado para qualquer caminho fora do bucket |

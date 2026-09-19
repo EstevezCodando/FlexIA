@@ -13,7 +13,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Iterator
 
-REGIAO = os.environ.get("AWS_REGION", "us-east-1")
 AGENTE = Path(__file__).resolve().parent.parent / "app" / "SINAgent"
 
 
@@ -54,9 +53,10 @@ def perguntar_local(pergunta: str, sessao: str) -> Iterator[tuple]:
 def perguntar_agentcore(pergunta: str, sessao: str) -> Iterator[tuple]:
     import boto3  # noqa: PLC0415
 
-    cliente = boto3.client("bedrock-agentcore", region_name=REGIAO)
+    arn = os.environ["FLEXIA_RUNTIME_ARN"]
+    cliente = boto3.client("bedrock-agentcore", region_name=arn.split(":")[3])  # região do runtime, não a do lake
     resp = cliente.invoke_agent_runtime(
-        agentRuntimeArn=os.environ["FLEXIA_RUNTIME_ARN"],
+        agentRuntimeArn=arn,
         runtimeSessionId=sessao,
         payload=json.dumps({"prompt": pergunta}).encode(),
     )

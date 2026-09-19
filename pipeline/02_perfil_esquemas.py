@@ -2,12 +2,16 @@
 
 Saída: out/esquemas.json — por conjunto, a lista de assinaturas distintas e quais arquivos têm cada uma.
 """
+import sys
 import json
 import os
 from collections import defaultdict
 from pathlib import Path
 
 import duckdb
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
 
 ORIGEM = Path(os.environ.get("ORIGEM", r"C:\Hackathon_ONS")) / "data" / "raw" / "ons"
 SAIDA = Path(__file__).resolve().parent.parent / "out" / "esquemas.json"

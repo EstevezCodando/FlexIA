@@ -27,6 +27,12 @@ import curl_cffi.requests as cr
 import duckdb
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:
+    import config  # noqa: E402,F401  (.env da raiz; ausente no Code Editor, onde o ambiente já vem pronto)
+except ImportError:
+    pass
+
 BASE = Path(__file__).resolve().parent.parent
 LAKE = BASE / "out" / "lake"
 TABELA = "clima_previsao_horaria_emissoes"

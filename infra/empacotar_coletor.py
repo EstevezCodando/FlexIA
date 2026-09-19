@@ -11,6 +11,9 @@ import sys
 import zipfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 BASE = Path(__file__).resolve().parent.parent
 BUILD = BASE / "out" / "lambda_build"
 ZIP = BASE / "out" / "flexia-coletor.zip"

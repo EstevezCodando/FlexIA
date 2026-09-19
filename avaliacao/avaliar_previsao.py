@@ -22,9 +22,13 @@ Métricas:
 Saída: avaliacao/resultados/previsao.json e avaliacao/resultados/previsao.md
 """
 import json
+import sys
 from pathlib import Path
 
 import duckdb
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
 
 BASE = Path(__file__).resolve().parent.parent
 LAKE = BASE / "out" / "lake" / "analytics"

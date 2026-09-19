@@ -15,11 +15,12 @@ import sys
 import time
 from pathlib import Path
 
-import boto3
 from botocore.exceptions import ClientError
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 REGIAO = "us-east-1"
-PERFIL = os.environ.get("AWS_PROFILE", "hackathon")
 BASE = Path(__file__).resolve().parent.parent
 FUNCAO = "flexia-coletor"
 ROLE = "flexia-coletor-lambda"
@@ -29,7 +30,7 @@ REGRAS = {
     "flexia-coleta-mensal": ("cron(0 11 1 * ? *)", "mensal"),
 }
 
-sessao = boto3.Session(profile_name=PERFIL, region_name=REGIAO)
+sessao = config.sessao(REGIAO)
 CONTA = sessao.client("sts").get_caller_identity()["Account"]
 BUCKET = f"ons-datalake-{CONTA}"
 APLICAR = "--aplicar" in sys.argv

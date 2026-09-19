@@ -24,6 +24,9 @@ from types import SimpleNamespace
 
 import duckdb
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 BASE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE / "flexia" / "app" / "SINAgent"))
 from domain.roteador import classificar  # noqa: E402

@@ -21,6 +21,12 @@ from pathlib import Path
 
 import boto3
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:
+    import config  # noqa: E402,F401  (.env da raiz; ausente no Code Editor, onde o ambiente já vem pronto)
+except ImportError:
+    pass
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from coletor import Destino  # noqa: E402
 from fontes import FONTES  # noqa: E402

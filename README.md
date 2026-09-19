@@ -24,8 +24,8 @@ Ela combina três coisas construídas neste projeto:
 
 | | |
 |---|---|
-| **Tabelas no data lake** | 110 (ONS 43 · ANEEL 25 · EPE 16 · análises da equipe 15 · CCEE 7 · clima 3 · MME 1) |
-| **Registros** | 415 milhões, em 2,9 GB de Parquet (a origem tinha 8,9 GB, com 3,7 GB duplicados) |
+| **Tabelas no data lake** | 116 (ONS 43 · ANEEL 30 · EPE 16 · análises da equipe 15 · CCEE 7 · clima 3 · MME 2) |
+| **Registros** | 415 milhões, em 2,95 GB de Parquet (a origem tinha 8,9 GB, com 3,7 GB duplicados) |
 | **Colunas descritas** | 96 % das colunas das tabelas novas, com o dicionário **oficial** da fonte sempre que ele existe |
 | **Documentos pesquisáveis** | 384 documentos / 2.433 trechos na primeira coleta; somam-se os Procedimentos de Rede (159 submódulos), ~16 mil decisões da Diretoria da ANEEL, resoluções do CNPE, agenda regulatória e manchetes (ver [seção 6](#6-coleta-de-documentos-com-o-cavuca)) |
 | **Exatidão das respostas** | 26/26 corretas em 2 rodadas de 13 perguntas com gabarito (numéricas, documentos e perguntas sem resposta nos dados) |
@@ -385,12 +385,23 @@ Detalhes, matrizes de confusão e o histórico de falhas corrigidas: [docs/04-av
 
 ## 13. Como executar
 
+Toda a configuração (chaves AWS, região, bucket, instância do Code Editor, modo do chat, modelos)
+fica num único arquivo **`.env`**, fora do git; o modelo comentado é o [`.env.example`](.env.example).
+O [`configurar.ps1`](configurar.ps1) prepara tudo de uma vez:
+
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
-$env:AWS_PROFILE = "hackathon"
-.venv\Scripts\streamlit run flexia\web\app.py          # chat em http://localhost:8501
+Set-ExecutionPolicy -Scope Process Bypass
+# 1. cole o bloco $Env:AWS_... de "Get AWS CLI credentials" (painel do evento) e rode:
+.\configurar.ps1 -SalvarCredenciais          # .venv + dependências + .env + verificação da conta
+.\configurar.ps1 -SemInstalar -Chat          # chat em http://localhost:8501
 ```
+
+| opção | o que faz |
+|---|---|
+| *(nenhuma)* | cria `.venv`, instala as dependências, cria o `.env` e confere credenciais, bucket, modelos do Bedrock, Code Editor e runtime |
+| `-SalvarCredenciais` | grava no `.env` as chaves coladas no terminal (repita quando aparecer `ExpiredToken`) |
+| `-Publicar` · `-Coletar` · `-Implantar` · `-Agendar` | publica o lake no S3 · coleta e indexa os documentos · implanta no AgentCore · agenda a coleta |
+| `-Tudo` | as quatro acima, em ordem |
 
 Reconstrução completa (lake, ingestão, coleta, índice, implantação e agendamento):
 [docs/02-reproduzir-e-operar.md](docs/02-reproduzir-e-operar.md).
@@ -412,7 +423,9 @@ ingestao/     novas bases: ONS (bucket oficial), CKAN (ANEEL/CCEE/MME), EPE, pre
 coleta/       documentos com o Cavuca: fontes, coletor (5 modos), indexador, sementes
 flexia/       agente (app/SINAgent), chat web (web/), testes e instaladores para o Code Editor
 avaliacao/    avaliações de previsão e de respostas, com resultados versionados
-infra/        empacotamento para Lambda (para contas que permitem PassRole)
+infra/        verificação da conta, execução no Code Editor via SSM, empacotamento para Lambda
+config.py     carrega o .env em todos os scripts (modelo: .env.example)
+configurar.ps1  configuração inicial e etapas de implantação
 docs/         documentação detalhada
 ```
 
@@ -420,7 +433,7 @@ docs/         documentação detalhada
 
 ## 15. Próximos passos
 
-1. **Implantar no AgentCore** e dar ao runtime leitura do lake (scripts prontos em `flexia/`).
+1. **Implantar no AgentCore** e dar ao runtime leitura do lake: `.\configurar.ps1 -Publicar -Implantar`.
 2. **Diário Oficial da União via INLABS** — exige cadastro do usuário.
 3. **WeatherNext** — conector pronto; aguarda liberação da conta Google.
 4. **Biblioteca SOPHIA da ANEEL** (atos normativos), sem contornar a proteção anti-robô.

@@ -16,6 +16,9 @@ import curl_cffi.requests as cr
 import duckdb
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ckan import descrever_colunas  # noqa: E402
 from unificar import nome_coluna, unificar  # noqa: E402

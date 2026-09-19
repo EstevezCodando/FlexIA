@@ -19,6 +19,9 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from unificar import nome_coluna, unificar  # noqa: E402
 

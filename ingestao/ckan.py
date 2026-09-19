@@ -19,6 +19,9 @@ from urllib.parse import urljoin
 
 import curl_cffi.requests as cr
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from unificar import unificar  # noqa: E402
 

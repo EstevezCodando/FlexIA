@@ -10,6 +10,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 ORIGEM = Path(os.environ.get("ORIGEM", r"C:\Hackathon_ONS"))
 SAIDA = Path(__file__).resolve().parent.parent / "out" / "inventario.csv"
 IGNORAR_DIRS = {".git", "node_modules", "__pycache__", ".venv"}

@@ -3,13 +3,14 @@
 A conta do workshop não permite Glue/Athena; a consulta é feita pelo DuckDB lendo o Parquet
 direto do S3. O dicionário de dados vai para s3://<bucket>/catalogo/catalogo.json.
 
-Pré-requisito: perfil AWS (padrão: AWS_PROFILE=hackathon). Bucket com Block Public Access.
+Pré-requisito: credenciais AWS no .env (ver .env.example / configurar.ps1). Bucket com Block Public Access.
 
 Uso:
   python pipeline/04_publicar.py                       # tudo
   python pipeline/04_publicar.py --sem-raw             # pula o upload dos brutos
   python pipeline/04_publicar.py --validar             # só confere contagens lendo do S3
   python pipeline/04_publicar.py --permitir-runtimes   # também dá leitura do lake às roles AgentCore
+  python pipeline/04_publicar.py --validar --permitir-runtimes   # só a permissão + conferência, sem reenviar
 """
 import csv
 import json
@@ -17,26 +18,26 @@ import os
 import sys
 from pathlib import Path
 
-import boto3
 import duckdb
 from boto3.s3.transfer import TransferConfig
 from botocore.exceptions import ClientError
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import config  # noqa: E402  (.env da raiz do projeto)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from catalogo import REGRAS, TABELAS  # noqa: E402
 
-REGIAO = os.environ.get("AWS_REGION", "us-east-1")
-PERFIL = os.environ.get("AWS_PROFILE", "hackathon")
+REGIAO = config.REGIAO
 BASE = Path(__file__).resolve().parent.parent
 LAKE = BASE / "out" / "lake"
 ORIGEM = Path(os.environ.get("ORIGEM", r"C:\Hackathon_ONS"))
 EXCLUIR_RAW = (".duckdb",)
 
-sessao = boto3.Session(profile_name=PERFIL, region_name=REGIAO) \
-    if PERFIL in boto3.Session().available_profiles else boto3.Session(region_name=REGIAO)
+sessao = config.sessao()
 s3 = sessao.client("s3")
 CONTA = sessao.client("sts").get_caller_identity()["Account"]
-BUCKET = os.environ.get("BUCKET", f"ons-datalake-{CONTA}")
+BUCKET = os.environ.get("FLEXIA_BUCKET") or f"ons-datalake-{CONTA}"
 TRANSFER = TransferConfig(multipart_threshold=64 * 1024**2, max_concurrency=16)
 
 
@@ -213,7 +214,8 @@ def validar() -> None:
     """Conta as linhas de cada tabela lendo do S3 e compara com a cópia local."""
     con = duckdb.connect()
     con.sql("INSTALL httpfs; LOAD httpfs; INSTALL aws; LOAD aws;")
-    con.sql(f"CREATE SECRET s (TYPE s3, PROVIDER credential_chain, PROFILE '{PERFIL}', REGION '{REGIAO}')")
+    perfil = "" if os.environ.get("AWS_ACCESS_KEY_ID") else f"PROFILE '{os.environ['AWS_PROFILE']}', "
+    con.sql(f"CREATE SECRET s (TYPE s3, PROVIDER credential_chain, {perfil}REGION '{REGIAO}')")
     erros = 0
     for camada, pasta in tabelas_locais():
         local = con.sql(f"select count(*) from read_parquet('{pasta.as_posix()}/**/*.parquet')").fetchone()[0]
@@ -233,11 +235,11 @@ def main() -> None:
             enviar_raw()
         publicar_catalogo()
         enviar_flexia()
-        # Concessão de IAM só com aprovação explícita (flag).
-        if "--permitir-runtimes" in sys.argv:
-            permitir_runtimes()
-        else:
-            print("IAM: nada alterado. Rode com --permitir-runtimes para dar à FlexIA leitura do lake.")
+    # Concessão de IAM só com aprovação explícita (flag); com --validar, não reenvia nada.
+    if "--permitir-runtimes" in sys.argv:
+        permitir_runtimes()
+    elif "--validar" not in sys.argv:
+        print("IAM: nada alterado. Rode com --permitir-runtimes para dar à FlexIA leitura do lake.")
     validar()
 
 
