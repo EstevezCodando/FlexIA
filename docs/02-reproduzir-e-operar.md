@@ -204,6 +204,10 @@ Rode `avaliar_flexia.py` depois de qualquer mudança no prompt, nas regras, no r
 | fonte sempre com 0 documentos | página montada por JavaScript ou regra `permitir` errada | ver links reais com `coleta\sondar_fontes.py`; páginas JS exigem coletor com navegador |
 | chat mostra "None" repetido | expressão solta no código (magic do Streamlit) | não deixe expressões soltas em `flexia/web/*.py` |
 | `iam:PassRole` negado | conta do workshop | usar cron no Code Editor (seção 4) |
+| `CDK synth failed ... uv is required` | `~/.local/bin` fora do PATH na sessão do SSM | já tratado em `infra/code_editor.py`; se colar o script à mão, rode antes `export PATH="$HOME/.local/bin:$PATH"` |
+| FlexIA implantada diz que não consegue acessar o data lake | role do runtime sem a política de leitura, ou DuckDB sem `HOME` (versões antigas do código) | `04_publicar.py --validar --permitir-runtimes`; republicar o código e reimplantar. Logs: CloudWatch `/aws/bedrock-agentcore/runtimes/<id>-DEFAULT` (us-west-2) |
+| validação acusa o dobro de linhas numa tabela | tabela regerada com outro particionamento; arquivos antigos continuam no S3 | `04_publicar.py --sem-raw --remover-antigos` (o bucket é versionado) |
+| `agentcore status` mostra `GetAgentRuntime` negado | a role do Code Editor não tem essa leitura | só informativo; `infra\verificar.py` mostra o status real (`READY`) |
 
 ## 8. Custos (ordem de grandeza)
 - S3: ~5 GB armazenados → centavos de dólar por mês.

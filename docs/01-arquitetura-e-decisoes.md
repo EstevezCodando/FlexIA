@@ -11,12 +11,12 @@ restrição abaixo foi verificada por chamada real à API em 18/09/2026.
 flowchart LR
   subgraph Local["Máquina local (C:\\Desenvolvimento\\AWS)"]
     A["C:\\Hackathon_ONS<br/>acervo da equipe (somente leitura)"] --> B["pipeline/01-03<br/>dedup + curadoria"]
-    B --> C["out/lake<br/>33 tabelas Parquet"]
+    B --> C["out/lake<br/>116 tabelas Parquet<br/>(33 do acervo + 83 de ingestao/)"]
   end
-  C -- "pipeline/04_publicar.py" --> S3[("S3 ons-datalake-899110172465<br/>raw/ curated/ analytics/ catalogo/ docs/")]
+  C -- "pipeline/04_publicar.py" --> S3[("S3 ons-datalake-899110172465 · us-east-1<br/>raw/ curated/ analytics/ catalogo/ docs/")]
   W["Sites do setor<br/>ANEEL, MME, CCEE, EPE, Planalto, ONS"] -- "Cavuca (coleta/coletor.py)<br/>cron diário/semanal/mensal" --> S3
   S3 -- "coleta/indexar.py<br/>Cohere Embed v3" --> S3
-  U["Usuário no chat<br/>(Streamlit)"] --> F["FlexIA<br/>Strands + AgentCore"]
+  U["Usuário no chat<br/>(Streamlit)"] --> F["FlexIA<br/>Strands + AgentCore Runtime (us-west-2)"]
   F -- "1. classifica a pergunta" --> N["NVIDIA Nemotron Nano 3 30B"]
   F -- "2. responde" --> M["Claude Haiku 4.5 / Sonnet 4.6<br/>ou Nemotron (conversa)"]
   F -- "consultar_sql (DuckDB)" --> S3
@@ -207,6 +207,31 @@ repositório, `flexia/app/SINAgent/`) substitui o `main.py` inteiro.
 - Aquecimento na inicialização do agente (extensões DuckDB, catálogo, índice de documentos): a
   primeira consulta não paga mais ~40 s.
 - Tempos medidos localmente: conversa 1,7 s; dados/documentos simples 6–15 s; mistas até ~50 s.
+- No AgentCore (19/09/2026): conversa 8,6 s na primeira chamada (inicialização da sessão);
+  pergunta de dados 72 s na primeira sessão (instalação das extensões DuckDB no contêiner novo) e
+  4,5 s na pergunta seguinte da mesma sessão.
+
+### 4.6 Implantação no Bedrock AgentCore
+- **Onde:** runtime `SINIntelligence_SINAgent` na conta do workshop, região **us-west-2** (a região
+  em que o CDK do Code Editor foi preparado pelo workshop), pilha CloudFormation
+  `AgentCore-SINIntelligence-default`. O lake e os modelos continuam em **us-east-1**: o agente usa
+  `FLEXIA_REGIAO=us-east-1` para S3 e Bedrock, independentemente da região do runtime.
+- **Como:** da máquina local, `infra/code_editor.py` envia `flexia/implantar_flexia.sh` à instância
+  do Code Editor pelo Systems Manager (Run Command). O deploy precisa rodar lá porque só a role da
+  instância pode criar a pilha do AgentCore (a WSParticipantRole não tem `iam:PassRole` para ela).
+  O script baixa o código do S3, acrescenta `duckdb`, `numpy` e `boto3` ao `pyproject.toml` (o
+  projeto usa `uv`, não `requirements.txt`), valida e roda `agentcore deploy`.
+- **Leitura do lake:** a role criada pelo CDK recebeu a política inline `FlexIALeituraDataLake`
+  (somente `GetObject`/`ListBucket` em `curated/`, `analytics/`, `catalogo/` e `docs/`).
+- **Problemas encontrados no deploy e correções:**
+
+| sintoma | causa | correção |
+|---|---|---|
+| `CDK synth failed ... uv is required` | o Run Command abre um shell não interativo, que não lê o `.bashrc`; `~/.local/bin` (onde está o `uv`) fica fora do PATH | `code_editor.py` exporta `PATH="$HOME/.local/bin:$PATH"` em todo comando |
+| saída do deploy truncada | a listagem de arquivos incluía a `.venv` e estourou o limite de saída do SSM | listagem sem `.venv` e log completo em `~/flexia-implantar.log` na instância |
+| `--permitir-runtimes` não achava o runtime | a busca olhava só `us-east-1` | busca também em `us-west-2` (`FLEXIA_REGIAO_AGENTCORE`) |
+| "dificuldade técnica ao acessar o data lake" | o contêiner do AgentCore não tem `HOME`, e o DuckDB precisa de um diretório pessoal (`Can't find the home directory`) | `home_directory`, `extension_directory` e `secret_directory` apontam para o diretório temporário |
+| `agentcore status` mostra `GetAgentRuntime` negado | a role do Code Editor não tem essa leitura | só informativo; o runtime está `READY` e responde |
 
 ## 5. Interface (chat)
 `flexia/web/` — Streamlit, separado em quatro módulos:
@@ -234,14 +259,34 @@ Decisões de interface:
 | S3; Bedrock InvokeModel (Claude Sonnet 4.6/4.5, Haiku 4.5; Nemotron; Cohere; Titan); AgentCore (listar); EventBridge Rules; Lambda (criar); ECR; ECS; CodeBuild; Cognito; IAM CreateRole/PutRolePolicy | Glue, Athena, Lake Formation, S3 Tables, S3 Vectors, OpenSearch Serverless, RDS, Step Functions, EventBridge Scheduler, CloudFront, API Gateway, Claude Sonnet 5/Opus 5; `iam:PassRole` para qualquer role além da WSParticipantRole |
 
 ## 7. Permissões concedidas pelo sistema
-- Nenhuma permissão foi concedida automaticamente. `pipeline/04_publicar.py --permitir-runtimes`
+- Nenhuma permissão é concedida automaticamente. `pipeline/04_publicar.py --permitir-runtimes`
   (opcional, exige decisão explícita) anexa às roles dos runtimes AgentCore uma política
   **somente leitura** de `curated/`, `analytics/`, `catalogo/` e `docs/` do bucket.
-- Credenciais: o perfil local `hackathon` foi gravado pelo próprio usuário; o código nunca grava
-  ou exibe credenciais.
+- Concedida em 19/09/2026, a pedido do usuário: `FlexIALeituraDataLake` na role
+  `AgentCore-SINIntelligence-ApplicationAgentSINAgentR-…` do runtime da FlexIA.
+- Credenciais: ficam no `.env` (fora do git), gravadas pelo próprio usuário com
+  `configurar.ps1 -SalvarCredenciais`; o código nunca exibe credenciais.
+- Exclusões no S3 também exigem decisão explícita: `04_publicar.py` só **lista** arquivos antigos
+  de tabelas regeradas; apagá-los exige `--remover-antigos` (o bucket é versionado).
 
-## 8. Acesso externo
-A FlexIA não tem link público. O AgentCore exige autenticação AWS em cada chamada, e os serviços
+## 8. Configuração: um arquivo `.env`
+- **Escolha:** todas as variáveis (chaves AWS ou perfil, região, bucket, instância do Code Editor,
+  modo do chat, ARN do runtime, modelos, WeatherNext) num `.env` na raiz, com modelo comentado em
+  `.env.example`. `config.py` é importado por todos os scripts de entrada e carrega o `.env` sem
+  sobrescrever variáveis já definidas no terminal.
+- **Por quê:** antes, cada script tinha o perfil `hackathon` e a região fixos no código, e as chaves
+  temporárias do workshop precisavam ser regravadas num `~/.aws/credentials` a cada expiração.
+  Agora a troca de chaves é um comando (`configurar.ps1 -SalvarCredenciais`) e o repositório pode
+  ser publicado sem nenhum dado de conta no código.
+- **Descoberta automática:** `infra/verificar.py` preenche no `.env` o bucket, a instância do Code
+  Editor (única instância Linux online no SSM) e o ARN do runtime, quando estão vazios.
+- **Scripts que rodam no Code Editor** (coletor, indexador, previsão) importam `config.py` de forma
+  opcional: lá o ambiente já vem pronto pela role da instância.
+
+## 9. Acesso externo
+A FlexIA não tem link público. O runtime no AgentCore aceita chamadas de qualquer máquina com
+credenciais da conta (o chat em modo `agentcore` faz isso), mas exige autenticação AWS em cada
+chamada, e os serviços
 para expor uma página (CloudFront, API Gateway, Lambda com role) estão bloqueados. Opções: mesma
 rede local (`http://<ip>:8501`) ou túnel temporário com senha no chat (não implementado; expõe as
 credenciais e o custo de Bedrock do usuário). O link do Code Editor **não deve ser compartilhado**:

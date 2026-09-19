@@ -175,4 +175,21 @@ Nas falhas das rodadas 2–4 a FlexIA **disse que não encontrou** o valor em ve
   tabelas e fontes, e repetir a cada mudança de prompt, regras, roteador ou busca.
 - As rodadas 7–8 foram feitas antes da trava do roteador (2.2); a trava só envia mais perguntas a
   modelos com ferramentas, não reduz o acesso a dados.
-- Latências medidas numa máquina local com o agente aquecido; no AgentCore podem variar.
+- Latências medidas numa máquina local com o agente aquecido; no AgentCore podem variar (ver 2.5).
+
+### 2.5 Teste do agente implantado no AgentCore (19/09/2026)
+Chamadas reais ao runtime `SINIntelligence_SINAgent` (us-west-2) pelo cliente do chat
+(`flexia/web/cliente.py`, modo `agentcore`), todas na mesma sessão:
+
+| pergunta | ferramentas | tempo | resultado |
+|---|---|---|---|
+| "Oi, quem é você?" | nenhuma (Nemotron) | 8,6 s | apresenta-se como FlexIA ✅ |
+| "Qual foi o CMO médio do Sudeste em 2025?" | listar_tabelas ×2, descrever_tabela, consultar_sql | 72,3 s | **R$ 216,05/MWh** sobre 17.472 patamares; gabarito 216,047 ✅ |
+| "E em 2024, subiu ou caiu?" | consultar_sql | 4,5 s | R$ 107,55 → R$ 216,05 (+100,9 %), usando o contexto da pergunta anterior ✅ |
+| Procedimentos de Rede sobre constrained-off eólico | buscar_documentos ×6 | 18,7 s | não encontrou trechos e **disse que não encontrou**, sem inventar; os Procedimentos de Rede ainda não estavam indexados naquele momento |
+
+- Os 72 s da primeira pergunta de dados são a instalação das extensões do DuckDB num contêiner novo;
+  nas perguntas seguintes da sessão o tempo cai para o mesmo patamar do teste local.
+- A primeira implantação respondia "dificuldade técnica ao acessar o data lake": o contêiner não tem
+  `HOME` e o DuckDB exige um diretório pessoal. Corrigido (diretórios do DuckDB no temporário) e
+  reimplantado; a falha foi encontrada nos logs do runtime no CloudWatch.

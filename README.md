@@ -31,6 +31,7 @@ Ela combina três coisas construídas neste projeto:
 | **Exatidão das respostas** | 26/26 corretas em 2 rodadas de 13 perguntas com gabarito (numéricas, documentos e perguntas sem resposta nos dados) |
 | **Roteador NVIDIA** | 90,3 % de acerto de rota em 72 classificações; **0** perguntas de dados enviadas a modelo sem ferramentas; 0,42 s por decisão |
 | **Tempo de resposta** | mediana de 9,3 s; conversas curtas em ~1,7 s |
+| **Em produção** | implantada no **Amazon Bedrock AgentCore Runtime** (`SINIntelligence_SINAgent`, status `READY`), com leitura somente do lake; testada ponta a ponta no runtime com o mesmo valor do gabarito |
 
 ---
 
@@ -120,9 +121,21 @@ flowchart TB
   T1 -.-> CAT
 ```
 
-Tudo roda na conta do **AWS Workshop Studio** (us-east-1). O que a conta bloqueia — Glue, Athena,
-bancos vetoriais gerenciados, Lambda com role própria — foi contornado com DuckDB, busca em memória e
-cron (ver [seção 12](#12-restrições-da-conta-e-como-foram-contornadas)).
+Tudo roda na conta do **AWS Workshop Studio**: o lake, os documentos e os modelos em **us-east-1**;
+o runtime da FlexIA no **AgentCore em us-west-2** (a região preparada pelo workshop para o CDK), lendo
+o lake em us-east-1. O que a conta bloqueia — Glue, Athena, bancos vetoriais gerenciados, Lambda com
+role própria — foi contornado com DuckDB, busca em memória e cron (ver
+[seção 12](#12-restrições-da-conta-e-como-foram-contornadas)).
+
+### Implantação na AWS
+
+| peça | onde | como chega lá |
+|---|---|---|
+| Data lake, catálogo, documentos e índice | S3 `ons-datalake-<conta>` (us-east-1), privado, criptografado, versionado | `pipeline/04_publicar.py` e o coletor |
+| FlexIA | **Bedrock AgentCore Runtime** `SINIntelligence_SINAgent` (us-west-2) | `configurar.ps1 -Implantar`: o `infra/code_editor.py` roda `flexia/implantar_flexia.sh` no Code Editor via Systems Manager, que faz `agentcore deploy` (CDK) |
+| Permissão do runtime | política inline `FlexIALeituraDataLake` na role do runtime | `04_publicar.py --permitir-runtimes` (só `GetObject`/`ListBucket` no lake) |
+| Coleta agendada | cron na EC2 do Code Editor | `configurar.ps1 -Agendar` |
+| Chat | Streamlit local, modo `local` (agente no processo) ou `agentcore` (chama o runtime) | `configurar.ps1 -Chat` |
 
 ---
 
@@ -365,6 +378,7 @@ precisa equilibrar), tema escuro, tela inicial com sugestões, respostas em stre
 |---|---|
 | Respostas ponta a ponta (13 perguntas × 2 rodadas) | **26/26** — numéricas 14/14, documentos 6/6, sem resposta nos dados 6/6 |
 | Roteador (24 perguntas × 3) | acurácia **90,3 %**, estabilidade 83,3 %, **0/72** sem ferramentas |
+| Agente implantado no AgentCore (4 perguntas numa sessão) | CMO do Sudeste 2025 **R$ 216,05/MWh** (gabarito 216,047), comparação com 2024 usando o contexto da conversa, e "não encontrei" em vez de inventar quando o documento não estava indexado |
 | Previsão D+1 de corte ENE da equipe (2026, fora da amostra) | R² 0,646; MAE 1.310 MWmed (24 % melhor que a persistência realista); F1 76,9 % para "corte ≥ 500 MWmed" |
 
 Detalhes, matrizes de confusão e o histórico de falhas corrigidas: [docs/04-avaliacao.md](docs/04-avaliacao.md).
@@ -380,6 +394,11 @@ Detalhes, matrizes de confusão e o histórico de falhas corrigidas: [docs/04-av
 | `iam:PassRole` (Lambda/ECS com role própria) | cron no Code Editor com a role da instância |
 | CloudFront, API Gateway | chat Streamlit local ou no Code Editor |
 | Claude Sonnet 5 / Opus 5 | Claude Sonnet 4.6 e Haiku 4.5 |
+| deploy do AgentCore pela role do participante | deploy feito na instância do Code Editor, comandada da máquina local pelo Systems Manager |
+
+Na implantação, três problemas do ambiente foram resolvidos: o `uv` fora do PATH nas sessões do
+Systems Manager, o runtime em outra região que a do lake e o contêiner do AgentCore **sem diretório
+`HOME`**, que o DuckDB exige (detalhes em [docs/01](docs/01-arquitetura-e-decisoes.md#46-implantação-no-bedrock-agentcore)).
 
 ---
 
@@ -433,11 +452,16 @@ docs/         documentação detalhada
 
 ## 15. Próximos passos
 
-1. **Implantar no AgentCore** e dar ao runtime leitura do lake: `.\configurar.ps1 -Publicar -Implantar`.
-2. **Diário Oficial da União via INLABS** — exige cadastro do usuário.
-3. **WeatherNext** — conector pronto; aguarda liberação da conta Google.
-4. **Biblioteca SOPHIA da ANEEL** (atos normativos), sem contornar a proteção anti-robô.
-5. Ampliar a avaliação para 50+ perguntas regulatórias, rodando a cada mudança.
+Feito: lake publicado, FlexIA implantada no AgentCore com leitura do lake e testada no runtime.
+
+1. **Agendar a coleta** no Code Editor: `.\configurar.ps1 -SemInstalar -Agendar`.
+2. **Limpar arquivos antigos** da tabela `aneel_samp_balanco` no S3 (regerada com outro
+   particionamento; hoje conta em dobro na validação): `pipeline\04_publicar.py --sem-raw --remover-antigos`.
+3. **Chat apontando para o runtime:** `FLEXIA_MODO=agentcore` no `.env`.
+4. **Diário Oficial da União via INLABS** — exige cadastro do usuário.
+5. **WeatherNext** — conector pronto; aguarda liberação da conta Google.
+6. **Biblioteca SOPHIA da ANEEL** (atos normativos), sem contornar a proteção anti-robô.
+7. Ampliar a avaliação para 50+ perguntas regulatórias e rodá-la também contra o runtime.
 
 ---
 
