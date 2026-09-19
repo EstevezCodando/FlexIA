@@ -11,6 +11,8 @@ Uso:
   python pipeline/04_publicar.py --validar             # só confere contagens lendo do S3
   python pipeline/04_publicar.py --permitir-runtimes   # também dá leitura do lake às roles AgentCore
   python pipeline/04_publicar.py --validar --permitir-runtimes   # só a permissão + conferência, sem reenviar
+  python pipeline/04_publicar.py --sem-raw --remover-antigos     # apaga do S3 arquivos de tabelas regeradas
+                                                                 # (bucket versionado: recuperável)
 """
 import csv
 import json
@@ -78,7 +80,23 @@ def enviar(pares: list[tuple[Path, str]], rotulo: str) -> None:
 def enviar_lake() -> None:
     for camada in ("curated", "analytics"):
         base = LAKE / camada
-        enviar([(p, f"{camada}/{p.relative_to(base).as_posix()}") for p in base.rglob("*.parquet")], camada)
+        pares = [(p, f"{camada}/{p.relative_to(base).as_posix()}") for p in base.rglob("*.parquet")]
+        enviar(pares, camada)
+        # tabela regerada com outro particionamento: arquivos antigos no S3 somariam linhas em dobro.
+        # Só remove dentro de tabelas que existem localmente; o bucket é versionado (recuperável).
+        locais = {k for _, k in pares}
+        tabelas = {d.name for d in base.iterdir() if d.is_dir()}
+        orfaos = [k for k in existentes(camada + "/")
+                  if k not in locais and k.split("/")[1] in tabelas and k.endswith(".parquet")]
+        if not orfaos:
+            continue
+        if "--remover-antigos" not in sys.argv:
+            print(f"{camada}: {len(orfaos)} arquivos antigos no S3 sem cópia local (ex.: {orfaos[0]}); "
+                  "rode com --remover-antigos para apagá-los")
+            continue
+        for i in range(0, len(orfaos), 1000):
+            s3.delete_objects(Bucket=BUCKET, Delete={"Objects": [{"Key": k} for k in orfaos[i:i + 1000]]})
+        print(f"{camada}: {len(orfaos)} arquivos antigos removidos do S3 (ex.: {orfaos[0]})")
 
 
 def enviar_raw() -> None:
@@ -193,14 +211,16 @@ def permitir_runtimes() -> None:
     """Anexa a política SOMENTE LEITURA do lake às roles dos runtimes AgentCore da conta."""
     iam = sessao.client("iam")
     roles = set()
-    try:
-        ctl = sessao.client("bedrock-agentcore-control")
-        for r in ctl.list_agent_runtimes().get("agentRuntimes", []):
-            det = ctl.get_agent_runtime(agentRuntimeId=r["agentRuntimeId"])
-            roles.add(det["roleArn"].split("/")[-1])
-            print(f"  runtime {r['agentRuntimeName']} -> role {det['roleArn'].split('/')[-1]}")
-    except Exception as e:  # noqa: BLE001
-        print(f"  aviso: não consegui listar runtimes AgentCore ({e})")
+    # o runtime é implantado pelo CDK do Code Editor (us-west-2), não na região do lake
+    for regiao in dict.fromkeys([REGIAO, os.environ.get("FLEXIA_REGIAO_AGENTCORE", "us-west-2")]):
+        try:
+            ctl = sessao.client("bedrock-agentcore-control", region_name=regiao)
+            for r in ctl.list_agent_runtimes().get("agentRuntimes", []):
+                det = ctl.get_agent_runtime(agentRuntimeId=r["agentRuntimeId"])
+                roles.add(det["roleArn"].split("/")[-1])
+                print(f"  runtime {r['agentRuntimeName']} ({regiao}) -> role {det['roleArn'].split('/')[-1]}")
+        except Exception as e:  # noqa: BLE001
+            print(f"  aviso: não consegui listar runtimes AgentCore em {regiao} ({e})")
     roles.update(r for r in os.environ.get("ROLES_EXTRAS", "").split(",") if r)
     if not roles:
         print("  nenhuma role de runtime encontrada; implante a FlexIA e rode de novo")

@@ -2,6 +2,7 @@
 # Executado remotamente por: python infra/code_editor.py --arquivo flexia/implantar_flexia.sh
 # (ou colado no terminal do Code Editor). Idempotente.
 set -e
+exec > >(tee ~/flexia-implantar.log) 2>&1
 source ~/.nvm/nvm.sh
 [ -f ~/workshop-env.sh ] && source ~/workshop-env.sh
 cd ~/build-with-skills/SINIntelligence
@@ -13,7 +14,7 @@ git add -A && git -c user.name='FlexIA' -c user.email='flexia@local' commit -qm 
 
 echo "== 2. código da FlexIA v2 (bucket em us-east-1)"
 aws s3 cp "s3://${BUCKET}/flexia/app/SINAgent/" app/SINAgent/ --recursive --quiet --region us-east-1
-find app/SINAgent -name "*.py" -newer agentcore/agentcore.json | sort
+find app/SINAgent -name "*.py" -not -path "*/.venv/*" -newer agentcore/agentcore.json | sort
 
 echo "== 3. dependências no pyproject.toml"
 python3 - <<'PY'

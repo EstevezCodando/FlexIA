@@ -34,8 +34,10 @@ def instancia_code_editor(ssm) -> str:
 def executar(script: str, timeout_s: int = 3600) -> tuple[int, str, str]:
     ssm = config.sessao("us-east-1").client("ssm")
     instancia = instancia_code_editor(ssm)
-    # roda como o usuário do Code Editor, com login shell (PATH do agentcore, uv, node etc.)
-    comando = f"sudo -u {USUARIO} -i bash <<'__FLEXIA__'\nset -o pipefail\n{script}\n__FLEXIA__"
+    # roda como o usuário do Code Editor, com login shell; ~/.local/bin (uv) só entra no PATH pelo .bashrc,
+    # que um shell não interativo não lê
+    comando = (f"sudo -u {USUARIO} -i bash <<'__FLEXIA__'\nset -o pipefail\n"
+               f'export PATH="$HOME/.local/bin:$PATH"\n{script}\n__FLEXIA__')
     cid = ssm.send_command(InstanceIds=[instancia], DocumentName="AWS-RunShellScript",
                            Parameters={"commands": [comando], "executionTimeout": [str(timeout_s)]},
                            TimeoutSeconds=600)["Command"]["CommandId"]
