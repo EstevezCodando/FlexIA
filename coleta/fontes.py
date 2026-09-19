@@ -72,9 +72,45 @@ FONTES = [
     {"id": "ccee_regras_procedimentos", "orgao": "CCEE", "tipo": "procedimentos", "modo": "crawl", "frequencia": "semanal",
      "urls": ["https://www.ccee.org.br/web/guest/regras-de-comercializacao"],
      "permitir": [r"ccee\.org\.br/.*(regras|procedimentos)"], "max_paginas": 40},
-    {"id": "ons_procedimentos_rede", "orgao": "ONS", "tipo": "procedimentos", "modo": "crawl", "frequencia": "semanal",
-     "ativa": False, "obs": "página montada por JavaScript; exige coletor com navegador (fase 2)",
-     "urls": ["https://www.ons.org.br/paginas/sobre-o-ons/procedimentos-de-rede/vigentes"]},
+    # Página montada por JavaScript: a lista vigente (159 submódulos) foi extraída com navegador para
+    # coleta/sementes/ons_procedimentos_rede.json; os PDFs têm URL estável e são baixados direto.
+    {"id": "ons_procedimentos_rede", "orgao": "ONS", "tipo": "procedimentos", "modo": "lista", "frequencia": "semanal",
+     "semente": "ons_procedimentos_rede.json", "titulo_prefixo": "Procedimentos de Rede do ONS —",
+     "urls": ["https://www.ons.org.br/paginas/sobre-o-ons/procedimentos-de-rede/vigentes"],
+     "atraso": 2, "max_chars": 400_000},
+    # ---------------- Desafio 1 · Copiloto Regulatório ----------------
+    {"id": "cnpe_resolucoes", "orgao": "CNPE", "tipo": "legislacao", "modo": "crawl", "frequencia": "semanal",
+     "urls": ["https://www.gov.br/mme/pt-br/assuntos/conselhos-e-comites/cnpe/resolucoes-do-cnpe"],
+     "permitir": [r"gov\.br/mme/pt-br/assuntos/conselhos-e-comites/cnpe/resolucoes-do-cnpe(/\d{4})?/?$"],
+     "pdfs": [r"gov\.br/mme/.*\.pdf"], "indices_extra": [r"resolucoes-do-cnpe(/\d{4})?/?$"],
+     "css": "#content", "max_paginas": 450, "max_chars": 200_000},
+    {"id": "aneel_agenda_regulatoria", "orgao": "ANEEL", "tipo": "regulacao", "modo": "crawl", "frequencia": "semanal",
+     "urls": ["https://www.gov.br/aneel/pt-br/assuntos/governanca-regulatoria/agenda-regulatoria"],
+     "permitir": [r"gov\.br/aneel/pt-br/assuntos/governanca-regulatoria/agenda-regulatoria"],
+     "pdfs": [r"gov\.br/aneel/.*\.pdf"], "css": "#content", "max_paginas": 40, "max_chars": 300_000},
+    # Cada item de pauta/decisão da Diretoria da ANEEL (tabela aneel_pautas_atas_diretoria, dados abertos
+    # oficiais) vira um documento pesquisável, com processo, relator, assunto e texto da decisão.
+    {"id": "aneel_decisoes_diretoria", "orgao": "ANEEL", "tipo": "regulacao", "modo": "tabela", "frequencia": "semanal",
+     "tabela": "aneel_pautas_atas_diretoria", "min_chars": 80,
+     "urls": ["https://dadosabertos.aneel.gov.br/dataset/pautas-e-atas-das-reunioes-publicas-da-diretoria"],
+     "url_item": "https://dadosabertos.aneel.gov.br/dataset/pautas-e-atas-das-reunioes-publicas-da-diretoria"
+                 "#{idereuniao}/{numprocesso}/{numordem}",
+     "titulo_item": "ANEEL — Reunião Pública {idereuniao} ({datreuniao}): {txtassunto}",
+     "texto_item": ("Reunião Pública da Diretoria da ANEEL {idereuniao}, realizada em {datreuniao}.\n"
+                    "Processo nº {numprocesso} · item de ordem {numordem} · relator(a): {nomdiretorrelator}.\n"
+                    "Classificação do assunto: {nomclassificacaoassunto}.\n"
+                    "Assunto: {txtassunto}\n"
+                    "Resultado do julgamento: {dscresultadojulgamento}.\n"
+                    "Decisão: {txtdecisaojulgamento}\n"
+                    "Ato administrativo: {nomtipoatoadministrativo} nº {numatoadministrativo}.")},
+    {"id": "midia_manchetes", "orgao": "Mídia do setor", "tipo": "manchetes", "modo": "rss", "frequencia": "diaria",
+     "obs": "somente manchete, data, veículo e link (regra do desafio)", "min_chars": 30,
+     "filtro_titulo": (r"energ|el[ée]tric|aneel|\bons\b|ccee|\bepe\b|\bmme\b|cnpe|transmiss|distribui|gera[çc]|usina|"
+                       r"hidrel|e[óo]lic|solar|fotovolt|tarif|leil[ãa]o|curtailment|constrained|bateria|armazenamento|"
+                       r"hidrog[êe]nio|nuclear|angra|itaipu|eletrobras|axia|taesa|light|enel|cemig|copel|neoenergia|"
+                       r"engie|mercado livre|\bpld\b|bandeira|linha[s]? de transmiss|subesta|apag[ãa]o|racionamento"),
+     "urls": ["https://megawhat.energy/feed/", "https://agenciainfra.com/blog/feed/", "https://www.absolar.org.br/feed/",
+              "https://abeeolica.org.br/feed/", "https://www.infomoney.com.br/tudo-sobre/energia-eletrica/feed/"]},
     # ---------------- Publicações e planejamento (mensal) ----------------
     {"id": "epe_publicacoes", "orgao": "EPE", "tipo": "publicacoes", "modo": "crawl", "frequencia": "mensal",
      "urls": ["https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes"],
@@ -108,6 +144,6 @@ for f in FONTES:
     # URLs de listagem: o crawl passa por elas para achar links, mas não as grava como documento
     f.setdefault("indices", [r"[?&](b_start|page|pagina|p_p_id)[:=]", r"/noticias/?$", r"/noticias/area-\d+",
                              r"/dataset/?(\?.*)?$",
-                             r"/publicacoes/?$", r"/procedimentos-regulatorios/?$"])
+                             r"/publicacoes/?$", r"/procedimentos-regulatorios/?$"] + f.pop("indices_extra", []))
 
 POR_ID = {f["id"]: f for f in FONTES}

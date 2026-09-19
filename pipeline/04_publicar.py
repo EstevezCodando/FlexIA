@@ -99,29 +99,58 @@ def tabelas_locais():
             yield camada, pasta
 
 
+FONTE_POR_PREFIXO = {"ons": "ONS", "aneel": "ANEEL", "ccee": "CCEE", "epe": "EPE", "clima": "ERA5/Open-Meteo",
+                     "analytics": "Equipe (análises)"}
+TEMA_MANUAL = {"ons_cmo": "precos", "ons_restricao": "restricao", "ons_geracao": "geracao", "ons_balanco": "geracao",
+               "ons_curva": "carga", "ons_intercambio": "intercambio", "ons_programacao": "operacao",
+               "ons_capacidade": "cadastro", "ons_modalidade": "cadastro", "ons_usina": "cadastro",
+               "aneel_tarifas": "precos", "aneel_siga": "cadastro", "clima": "clima", "analytics_corte": "restricao",
+               "analytics_tarifa": "precos", "analytics_frota": "mobilidade", "analytics_octopus": "precos"}
+
+
+def metadados_automaticos() -> dict:
+    """Metadados gerados pelos ingestores (ingestao/*.py): descrição oficial, colunas, origem, tema."""
+    pasta = BASE / "out" / "metadados"
+    return {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in pasta.glob("*.json")} if pasta.exists() else {}
+
+
 def publicar_catalogo() -> None:
-    """catalogo.json: o que a FlexIA lê para saber tabelas, colunas, unidades, caminhos e regras."""
+    """catalogo.json: o que a FlexIA lê para saber tabelas, colunas, unidades, caminhos e regras.
+    Descrições manuais (pipeline/catalogo.py) têm prioridade sobre as automáticas (out/metadados)."""
     con = duckdb.connect()
     ref = TABELAS["clima_era5_horario"]["colunas"]
+    auto = metadados_automaticos()
     tabelas = []
     for camada, pasta in tabelas_locais():
         nome = pasta.name
-        meta = TABELAS.get(nome, {"descricao": "", "colunas": {}})
+        a = auto.get(nome, {})
+        meta = TABELAS.get(nome) or {"descricao": a.get("descricao", ""), "colunas": a.get("colunas", {})}
         desc_cols = meta["colunas"] or (ref if nome.startswith("clima_") else {})
         particionada = any(d.name.startswith("ano=") for d in pasta.iterdir())
+        hive = any(d.is_dir() and "=" in d.name for d in pasta.iterdir())  # ano=, data_emissao= ...
         glob = f"{pasta.as_posix()}/**/*.parquet"
-        cols = con.sql(f"describe select * from read_parquet('{glob}', hive_partitioning={str(particionada).lower()})").fetchall()
+        cols = con.sql(f"describe select * from read_parquet('{glob}', hive_partitioning={str(hive).lower()})").fetchall()
         faixa = None
         if particionada:
             faixa = [int(x) for x in con.sql(
                 f"select min(ano), max(ano) from read_parquet('{glob}', hive_partitioning=true)").fetchone()]
+        prefixo = nome.split("_")[0]
+        tema = a.get("tema") or next((t for p, t in sorted(TEMA_MANUAL.items(), key=lambda kv: -len(kv[0]))
+                                      if nome.startswith(p)), "outros")
         tabelas.append({
             "nome": nome,
             "camada": camada,
+            "fonte": a.get("fonte") or FONTE_POR_PREFIXO.get(prefixo, prefixo.upper()),
+            "tema": tema,
+            "origem": a.get("origem", ""),
+            "dicionario": a.get("dicionario", "manual (pipeline/catalogo.py)" if nome in TABELAS else ""),
             "descricao": meta["descricao"],
             "caminho": f"s3://{BUCKET}/{camada}/{nome}/**/*.parquet",
             "particionada_por_ano": particionada,
+            "hive": hive,
             "anos": faixa,
+            "periodo": a.get("periodo"),
+            "coluna_tempo": a.get("coluna_tempo"),
             "linhas": con.sql(f"select count(*) from read_parquet('{glob}')").fetchone()[0],
             "colunas": [{"nome": c[0], "tipo": c[1], "descricao": desc_cols.get(c[0], "")} for c in cols],
         })
@@ -139,6 +168,8 @@ def enviar_flexia() -> None:
              if "__pycache__" not in p.parts]
     # coletor agendado (baixado por flexia/instalar_coletor_agendado.sh)
     pares += [(BASE / "coleta" / n, f"deploy/coletor/{n}") for n in ("coletor.py", "fontes.py", "indexar.py")]
+    pares += [(p, f"deploy/coletor/sementes/{p.name}") for p in (BASE / "coleta" / "sementes").glob("*.json")]
+    pares += [(BASE / "ingestao" / "previsao_clima.py", "deploy/coletor/previsao_clima.py")]
     for p, k in pares:
         s3.upload_file(str(p), BUCKET, k)
     print(f"flexia + coletor: {len(pares)} arquivos enviados")

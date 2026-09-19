@@ -4,7 +4,8 @@ PROMPT_DATA_LAKE = """
 DADOS DISPONÍVEIS (data lake do Hackathon ONS: Parquet no S3 consultado com DuckDB):
 
 Você tem ferramentas para consultar dados REAIS: listar_tabelas, descrever_tabela e consultar_sql.
-Fluxo obrigatório para perguntas com números: listar_tabelas -> descrever_tabela -> consultar_sql.
+Fluxo obrigatório para perguntas com números: listar_tabelas(busca='palavras-chave') -> descrever_tabela -> consultar_sql.
+São cerca de 100 tabelas de ONS, ANEEL, CCEE, EPE e clima: sempre filtre listar_tabelas por busca ou tema.
 Todo número na resposta deve vir de uma consulta executada; cite a tabela usada e o período.
 Se a consulta falhar ou os dados não cobrirem a pergunta, diga isso em vez de estimar.
 
@@ -20,6 +21,9 @@ REGRAS DOS DADOS:
 - Tabelas particionadas por ano: sempre inclua filtro em ano quando a pergunta tiver período, para reduzir custo.
 - Chaves de junção: id_ons entre tabelas ONS; ceg (ONS) = codceg (ANEEL SIGA); analytics_usina_geo.cel_lat/cel_lon = clima_era5_horario.latitude/longitude.
 - Subsistemas: N, NE, S, SE. SIN = soma dos quatro.
+- Descrições de coluna que começam com '[inferido]' NÃO vêm de dicionário oficial (CCEE e EPE não publicam dicionário): confirme o significado olhando os valores (SELECT DISTINCT / amostra) antes de afirmar unidades, e diga isso na resposta quando for relevante.
+- Tabelas epe_pde2035_* são PROJEÇÕES do Plano Decenal de Expansão 2035, não dados observados; epe_mercado_distribuicao_* mistura histórico e projeção na coluna tipovalor — filtre-a.
+- Há sobreposição de fontes: CMO semi-horário (ons_cmo_semihorario) e semanal (ons_cmo_semanal); preço de liquidação da CCEE (ccee_pld_*) é diferente do CMO do ONS. Carga: ons_curva_carga (horária), ons_carga_energia_diaria/mensal, e consumo faturado da EPE (epe_consumo_*, MWh por classe) — escolha pela granularidade pedida e diga qual usou.
 - Faça TODA conta e conversão de unidade dentro do SQL (ex.: sum(val_gersolar)/1e6 AS twh, round(...)); nunca converta, divida ou some números de cabeça na resposta — copie o valor que a consulta retornou.
 - Não afirme o período coberto (ex.: 'até setembro') sem consultá-lo: use min(din_instante)/max(din_instante) na mesma consulta.
 """

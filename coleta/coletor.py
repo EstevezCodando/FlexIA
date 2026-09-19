@@ -137,9 +137,10 @@ class Gravador:
 
     def salvar(self, url: str, titulo: str, texto: str, formato: str) -> None:
         texto = limpar(texto)
-        if len(texto) > MAX_DOC_CHARS:  # ex.: páginas CKAN com centenas de arquivos listados
-            texto = texto[:MAX_DOC_CHARS] + f"\n\n[... documento truncado em {MAX_DOC_CHARS:,} caracteres ...]"
-        if len(texto) < MIN_CHARS:
+        max_chars = self.fonte.get("max_chars", MAX_DOC_CHARS)
+        if len(texto) > max_chars:  # ex.: páginas CKAN com centenas de arquivos listados
+            texto = texto[:max_chars] + f"\n\n[... documento truncado em {max_chars:,} caracteres ...]"
+        if len(texto) < self.fonte.get("min_chars", MIN_CHARS):
             self.curtos += 1
             return
         sha = hashlib.sha256(texto.encode("utf-8")).hexdigest()
@@ -260,6 +261,74 @@ def coletar_crawl(fonte: dict, gravador: Gravador, limite: int | None) -> None:
     ColetorSpider().start()
 
 
+def coletar_lista(fonte: dict, gravador: "Gravador", limite: int | None) -> None:
+    """Lista fixa de documentos (semente JSON), para páginas montadas por JavaScript cujos arquivos
+    têm URL estável (ex.: Procedimentos de Rede do ONS)."""
+    import time
+    from urllib.parse import quote
+
+    import curl_cffi.requests as cr
+    semente = json.loads((Path(__file__).resolve().parent / "sementes" / fonte["semente"]).read_text(encoding="utf-8"))
+    for nome in semente["arquivos"][:limite]:
+        url = semente["url_base"] + quote(nome)
+        try:
+            r = cr.get(url, timeout=120, impersonate="chrome", headers={"User-Agent": UA})
+            if r.status_code != 200 or r.content[:5] != b"%PDF-":
+                log.warning("HTTP %s / não-PDF em %s", r.status_code, nome)
+                continue
+            titulo = f"{fonte['titulo_prefixo']} {Path(nome).stem.replace('Súbmodulo', 'Submódulo')}"
+            gravador.salvar(url, titulo, pdf_para_texto(r.content), "pdf")
+        except Exception as e:  # noqa: BLE001
+            log.warning("falha em %s: %s", nome, e)
+        time.sleep(fonte["atraso"])
+
+
+def coletar_rss(fonte: dict, gravador: "Gravador", limite: int | None) -> None:
+    """Mídias do setor: guarda SÓ manchete, data, veículo e link (regra do desafio: 'apenas manchete, com link')."""
+    import xml.etree.ElementTree as ET
+
+    import curl_cffi.requests as cr
+    for feed in fonte["urls"]:
+        try:
+            r = cr.get(feed, timeout=40, impersonate="chrome", headers={"User-Agent": UA})
+            raiz = ET.fromstring(r.content)
+        except Exception as e:  # noqa: BLE001
+            log.warning("feed %s indisponível: %s", feed, e)
+            continue
+        veiculo = (raiz.findtext("channel/title") or urlparse(feed).netloc).strip()
+        filtro = re.compile(fonte["filtro_titulo"], re.I) if fonte.get("filtro_titulo") else None
+        for item in raiz.iter("item"):
+            titulo = (item.findtext("title") or "").strip()
+            link = (item.findtext("link") or "").strip()
+            data = (item.findtext("pubDate") or "").strip()
+            if filtro and not filtro.search(titulo):  # veículos generalistas: só o setor elétrico
+                continue
+            if titulo and link:
+                gravador.salvar(link, titulo, f"Manchete: {titulo}\nVeículo: {veiculo}\nPublicada em: {data}\n"
+                                               f"Link para a matéria original: {link}", "manchete")
+
+
+def coletar_tabela(fonte: dict, gravador: "Gravador", limite: int | None) -> None:
+    """Transforma cada linha de uma tabela textual do lake (ex.: pautas e decisões da diretoria da ANEEL)
+    num documento pesquisável. Lê a cópia local do lake ou, na nuvem, o Parquet no S3."""
+    import duckdb
+    local = Path(__file__).resolve().parent.parent / "out" / "lake" / "curated" / fonte["tabela"]
+    con = duckdb.connect()
+    if local.exists():
+        origem = f"read_parquet('{local.as_posix()}/**/*.parquet')"
+    else:
+        con.execute("INSTALL httpfs; LOAD httpfs; INSTALL aws; LOAD aws;")
+        con.execute(f"CREATE SECRET s (TYPE s3, PROVIDER credential_chain, REGION '{os.environ.get('AWS_REGION', 'us-east-1')}')")
+        origem = f"read_parquet('s3://{os.environ['FLEXIA_BUCKET']}/curated/{fonte['tabela']}/**/*.parquet')"
+    rel = con.execute(f"SELECT * FROM {origem} {fonte.get('filtro_sql', '')} LIMIT {limite or 10_000_000}")
+    colunas = [d[0] for d in rel.description]
+    for linha in rel.fetchall():
+        v = {c: ("" if x is None else (str(int(x)) if isinstance(x, float) and x.is_integer() else str(x)))
+             for c, x in zip(colunas, linha)}
+        gravador.salvar(fonte["url_item"].format(**v), fonte["titulo_item"].format(**v)[:300],
+                        fonte["texto_item"].format(**v), "registro")
+
+
 def coletar_fonte(fonte: dict, destino: Destino, limite: int | None = None) -> dict:
     if not fonte["ativa"]:
         return {"fonte": fonte["id"], "ignorada": fonte.get("obs", "inativa")}
@@ -268,6 +337,12 @@ def coletar_fonte(fonte: dict, destino: Destino, limite: int | None = None) -> d
         coletar_paginas(fonte, g, limite)
     elif fonte["modo"] == "crawl":
         coletar_crawl(fonte, g, limite)
+    elif fonte["modo"] == "lista":
+        coletar_lista(fonte, g, limite)
+    elif fonte["modo"] == "rss":
+        coletar_rss(fonte, g, limite)
+    elif fonte["modo"] == "tabela":
+        coletar_tabela(fonte, g, limite)
     else:
         return {"fonte": fonte["id"], "ignorada": f"modo {fonte['modo']} não implementado"}
     return g.fechar()

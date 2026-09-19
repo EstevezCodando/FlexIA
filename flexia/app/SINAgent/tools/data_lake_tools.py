@@ -55,7 +55,7 @@ def _iniciar() -> dict:
         con.execute(f"CREATE SECRET lake (TYPE s3, PROVIDER credential_chain, REGION '{REGIAO}')")
         con.execute("SET memory_limit='3GB'; SET threads=4;")
         for t in catalogo["tabelas"]:
-            hive = "true" if t["particionada_por_ano"] else "false"
+            hive = "true" if t.get("hive", t["particionada_por_ano"]) else "false"
             con.execute(
                 f"CREATE VIEW \"{t['nome']}\" AS SELECT * FROM read_parquet('{t['caminho']}', hive_partitioning={hive})"
             )
@@ -67,20 +67,51 @@ def _iniciar() -> dict:
         return _estado
 
 
-@tool
-def listar_tabelas() -> str:
-    """
-    Lista as tabelas do data lake (ONS, clima ERA5, ANEEL e tabelas analíticas da equipe)
-    com descrição, período coberto e número de linhas.
+def _normalizar(texto: str) -> str:
+    import unicodedata
+    return unicodedata.normalize("NFKD", texto.lower()).encode("ascii", "ignore").decode()
 
-    Use SEMPRE antes de escrever SQL, para escolher a tabela certa.
+
+@tool
+def listar_tabelas(busca: str = "", tema: str = "") -> str:
+    """
+    Lista as tabelas do data lake — cerca de 100, de ONS, ANEEL, CCEE, EPE, clima ERA5 e análises
+    da equipe — com fonte, período, número de linhas e descrição, agrupadas por fonte.
+
+    Use SEMPRE antes de escrever SQL. Com muitas tabelas, FILTRE:
+      busca: palavras-chave (ex.: "reservatorio", "pld", "consumo industrial", "geracao distribuida").
+             Retorna tabelas cujo nome ou descrição contém TODAS as palavras.
+      tema:  um de hidrologia, carga, precos, geracao, restricao, intercambio, transmissao, mercado,
+             qualidade, confiabilidade, planejamento, cadastro, clima, mobilidade, operacao.
+    Sem filtros, devolve só nome, fonte e período de cada tabela (visão geral).
     """
     st = _iniciar()
-    linhas = []
+    termos = _normalizar(busca).split()
+    detalhado = bool(termos or tema)
+    por_fonte: dict[str, list[str]] = {}
     for t in st["catalogo"]["tabelas"]:
-        anos = f" [anos {t['anos'][0]}–{t['anos'][1]}, particionada por ano]" if t["particionada_por_ano"] else ""
-        linhas.append(f"- {t['nome']} ({t['linhas']:,} linhas){anos}: {t['descricao']}")
-    return "\n".join(linhas)
+        alvo = _normalizar(f"{t['nome']} {t['descricao']} {t.get('tema', '')}")
+        if termos and not all(x in alvo for x in termos):
+            continue
+        if tema and _normalizar(tema) != _normalizar(t.get("tema", "")):
+            continue
+        per = t.get("periodo") or (t["anos"] and [str(t["anos"][0]), str(t["anos"][1])])
+        per_txt = f" · {str(per[0])[:10]} a {str(per[1])[:10]}" if per and per[0] else ""
+        part = " · particionada por ano" if t["particionada_por_ano"] else ""
+        if detalhado:
+            linha = f"- {t['nome']} ({t['linhas']:,} linhas{per_txt}{part}): {t['descricao'][:400]}"
+        else:
+            linha = f"- {t['nome']} [{t.get('tema', '')}] ({t['linhas']:,} linhas{per_txt})"
+        por_fonte.setdefault(t.get("fonte", "?"), []).append(linha)
+    if not por_fonte:
+        return "Nenhuma tabela encontrada. Tente outras palavras ou liste sem filtros."
+    saida = []
+    for fonte, linhas in sorted(por_fonte.items()):
+        saida.append(f"## {fonte} ({len(linhas)})")
+        saida += linhas
+    if not detalhado:
+        saida.append("\nUse listar_tabelas(busca=...) para ver descrições, e descrever_tabela para as colunas.")
+    return "\n".join(saida)
 
 
 @tool
@@ -97,7 +128,13 @@ def descrever_tabela(tabela: str) -> str:
     t = st["tabelas"].get(tabela)
     if not t:
         return f"Tabela '{tabela}' não existe. Use listar_tabelas."
-    saida = [f"{t['nome']}: {t['descricao']}", ""]
+    saida = [f"{t['nome']}: {t['descricao']}"]
+    if t.get("fonte"):
+        saida.append(f"Fonte: {t['fonte']} · dicionário: {t.get('dicionario') or 'n/d'}"
+                     + (f" · origem: {t['origem']}" if t.get("origem") else ""))
+    if t.get("periodo") and t["periodo"][0]:
+        saida.append(f"Período: {t['periodo'][0]} a {t['periodo'][1]} (coluna {t.get('coluna_tempo')})")
+    saida.append("")
     saida += [f"- {c['nome']} ({c['tipo']}): {c['descricao']}" for c in t["colunas"]]
     if t["particionada_por_ano"]:
         saida.append("- ano (BIGINT): partição; filtre por ano para ler menos dados")
