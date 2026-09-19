@@ -59,6 +59,8 @@ PRINCÍPIOS OBRIGATÓRIOS:
 4. Não trate correlação como causalidade.
 5. Diga quando os dados forem insuficientes; não estime no lugar de consultar.
 6. Seja direta: comece pela resposta, depois o detalhe. Responda em português do Brasil.
+7. Não narre o que vai fazer ("Vou consultar...", "Agora vou...", "Perfeito!"): a interface já mostra
+   cada ferramenta em uso. Use as ferramentas em silêncio e escreva apenas a resposta final.
 """
 
 PROMPT_DOCUMENTOS = """
@@ -86,6 +88,8 @@ PROMPT_COMPLETO = PROMPT_BASE + PROMPT_DATA_LAKE + PROMPT_DOCUMENTOS
 FERRAMENTAS = [status_projeto, listar_tabelas, descrever_tabela, consultar_sql, buscar_documentos]
 
 _historicos: "OrderedDict[str, list]" = OrderedDict()
+# última decisão do roteador por sessão (lida pela interface para mostrar qual modelo respondeu)
+ULTIMAS_DECISOES: dict[str, dict] = {}
 _modelos: dict[str, BedrockModel] = {}
 
 
@@ -132,6 +136,10 @@ async def invoke(payload: Any, context: Any):
     pergunta = _texto_da_mensagem(payload)
     decisao = classificar(pergunta)
     log.info("FlexIA rota=%s complexidade=%s modelo=%s", decisao.rota, decisao.complexidade, decisao.modelo)
+    ULTIMAS_DECISOES[session_id] = {"rota": decisao.rota, "complexidade": decisao.complexidade,
+                                    "modelo": decisao.modelo, "ferramentas": decisao.usa_ferramentas}
+    if len(ULTIMAS_DECISOES) > 512:
+        ULTIMAS_DECISOES.pop(next(iter(ULTIMAS_DECISOES)))
 
     historico = _historico(session_id)
     tentativas = [decisao.perfil] if decisao.perfil == "raciocinio" else [decisao.perfil, "raciocinio"]
@@ -154,6 +162,7 @@ async def invoke(payload: Any, context: Any):
             if emitiu or i == len(tentativas) - 1:
                 raise
             log.warning("modelo %s falhou (%s); repetindo com %s", MODELOS[perfil], exc, MODELOS["raciocinio"])
+            ULTIMAS_DECISOES[session_id]["modelo"] = MODELOS["raciocinio"]
 
 
 if __name__ == "__main__":

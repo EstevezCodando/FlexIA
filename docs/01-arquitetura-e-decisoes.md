@@ -208,11 +208,25 @@ repositório, `flexia/app/SINAgent/`) substitui o `main.py` inteiro.
   primeira consulta não paga mais ~40 s.
 - Tempos medidos localmente: conversa 1,7 s; dados/documentos simples 6–15 s; mistas até ~50 s.
 
-## 5. Chat
-Streamlit (`flexia/chat_app.py`), com streaming e indicação das ferramentas usadas. Dois modos:
-`local` (agente no mesmo processo; funciona hoje) e `agentcore` (chama o runtime implantado via
-`invoke_agent_runtime`, depois do deploy).
+## 5. Interface (chat)
+`flexia/web/` — Streamlit, separado em quatro módulos:
 
+| módulo | papel |
+|---|---|
+| `app.py` | tela inicial com sugestões, histórico, respostas em streaming, barra lateral com o tamanho da base e os modelos |
+| `cliente.py` | fala com o agente no mesmo processo (`local`) ou com o runtime do AgentCore (`agentcore`) e entrega eventos simples: texto, ferramenta em uso, decisão do roteador |
+| `marca.py` | identidade visual: símbolo abstrato em SVG (dois arcos de energia em sentidos opostos, núcleo e ponto em órbita, gradiente turquesa → azul → violeta), avatares da FlexIA e do usuário, paleta |
+| `tema.py` | CSS: tema escuro com brilho radial, tipografia Inter, bolhas diferenciadas, tabelas e citações estilizadas, campo de pergunta com foco luminoso |
+
+Decisões de interface:
+- **Transparência:** enquanto responde, a FlexIA mostra os passos ("Roteando com NVIDIA Nemotron",
+  "Consultando o data lake", "Pesquisando leis, regulação e notícias"); ao final, selos informam o
+  modelo que respondeu (NVIDIA em verde, Claude em laranja), a rota, o número de consultas SQL e o tempo.
+- **Sem narração:** o prompt proíbe frases como "Vou consultar…" — os passos já aparecem na tela — e
+  a interface separa os blocos de texto antes e depois de cada ferramenta.
+- **Sem HTML do usuário:** o texto digitado é renderizado como Markdown, nunca como HTML.
+- **Responsiva:** a barra lateral fica recolhida em telas pequenas.
+- Tema base em `.streamlit/config.toml`.
 ## 6. O que a conta do workshop permite e bloqueia
 
 | Permitido | Bloqueado |

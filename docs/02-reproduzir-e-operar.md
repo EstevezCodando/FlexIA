@@ -125,8 +125,9 @@ Todas as perguntas de uma execução usam a mesma sessão (testa o contexto da c
 ### Chat
 ```powershell
 $env:AWS_PROFILE = "hackathon"
-.venv\Scripts\streamlit run flexia\chat_app.py      # http://localhost:8501
+.venv\Scripts\streamlit run flexia\web\app.py      # http://localhost:8501
 ```
+Ao mudar o CSS ou o símbolo (`flexia/web/tema.py`, `marca.py`), reinicie o Streamlit: módulos importados não recarregam sozinhos.
 Modo `agentcore` (depois do deploy): `$env:FLEXIA_MODO = "agentcore"; $env:FLEXIA_RUNTIME_ARN = "<arn do runtime>"`.
 
 ### Instalar e implantar no AgentCore (Code Editor, bash)
@@ -167,7 +168,7 @@ Rode `avaliar_flexia.py` depois de qualquer mudança no prompt, nas regras, no r
 | `Permission Error ... file system operations are disabled` | isolamento do DuckDB | esperado para qualquer caminho fora do bucket |
 | coletor salva páginas enormes com menu | falta `css` na fonte | definir o seletor do conteúdo principal |
 | fonte sempre com 0 documentos | página montada por JavaScript ou regra `permitir` errada | ver links reais com `coleta\sondar_fontes.py`; páginas JS exigem coletor com navegador |
-| chat mostra "None" repetido | expressão solta no código (magic do Streamlit) | não deixe expressões soltas em `chat_app.py` |
+| chat mostra "None" repetido | expressão solta no código (magic do Streamlit) | não deixe expressões soltas em `flexia/web/*.py` |
 | `iam:PassRole` negado | conta do workshop | usar cron no Code Editor (seção 4) |
 
 ## 8. Custos (ordem de grandeza)

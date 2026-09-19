@@ -21,7 +21,7 @@ pergunta e **Claude** (Amazon Bedrock) para responder.
 | Coletor Cavuca de 15 fontes do setor, respeitando robots.txt | Feito (12 fontes ativas) | 392 documentos coletados; 384 versões atuais indexadas em 2.433 trechos |
 | Busca semântica em documentos (RAG) | Feita | Cohere Embed Multilingual v3 + busca híbrida em memória |
 | FlexIA v2 (Strands + AgentCore) com roteamento NVIDIA Nemotron | Feita e testada localmente | 26/26 respostas corretas (13 perguntas × 2 rodadas), mediana 9,3 s; roteador 90,3 % |
-| Chat web (Streamlit) com streaming | Feito (roda local) | `streamlit run flexia/chat_app.py` |
+| Chat web (Streamlit) com streaming, tema escuro, símbolo próprio, passos ao vivo e selo do modelo que respondeu | Feito (roda local) | `streamlit run flexia/web/app.py` |
 | Avaliação da previsão D+1 de corte ENE (modelo da equipe) | Feita | R² 0,646; MAE 1.310 MWmed (24 % melhor que a persistência realista); acurácia 86,8 % e F1 76,9 % para "corte ≥ 500 MWmed" |
 | Implantação da FlexIA no AgentCore | **Pendente** — o usuário cola 2 scripts no Code Editor e roda `agentcore deploy` | [flexia/instalar_flexia_v2.sh](flexia/instalar_flexia_v2.sh) |
 | Coleta agendada (cron) | **Pendente** — mesmo motivo | [flexia/instalar_coletor_agendado.sh](flexia/instalar_coletor_agendado.sh) |
@@ -54,7 +54,7 @@ coleta/            coleta de documentos com o Cavuca
   lambda_handler.py    handler para Lambda (não implantável nesta conta; mantido para outra conta)
 flexia/            a assistente
   app/SINAgent/        código que vai para o runtime AgentCore (main.py, domain/, tools/)
-  chat_app.py          chat Streamlit (modo local ou AgentCore)
+  web/                 interface de chat (Streamlit): app.py, cliente.py (local/AgentCore), marca.py (símbolo e avatares), tema.py (CSS)
   testar_local.py      teste de linha de comando com streaming
   instalar_flexia_v2.sh, instalar_coletor_agendado.sh   scripts para o Code Editor
 avaliacao/         avaliar_previsao.py e avaliar_flexia.py
@@ -70,5 +70,5 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 $env:AWS_PROFILE = "hackathon"
 .venv\Scripts\python flexia\testar_local.py "Qual foi o CMO médio de cada subsistema em 2025?"
-.venv\Scripts\streamlit run flexia\chat_app.py      # abre o chat em http://localhost:8501
+.venv\Scripts\streamlit run flexia\web\app.py      # abre o chat em http://localhost:8501
 ```

@@ -7,7 +7,7 @@
       "runtimeArgs": [
         "-NoProfile",
         "-Command",
-        "$env:AWS_PROFILE='hackathon'; $env:PYTHONIOENCODING='utf-8'; .\\.venv\\Scripts\\streamlit.exe run flexia\\chat_app.py --server.port 8501 --server.headless true --browser.gatherUsageStats false"
+        "$env:AWS_PROFILE='hackathon'; $env:PYTHONIOENCODING='utf-8'; .\\.venv\\Scripts\\streamlit.exe run flexia\\web\\app.py --server.port 8501 --server.headless true --browser.gatherUsageStats false"
       ],
       "port": 8501
     }
